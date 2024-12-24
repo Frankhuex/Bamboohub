@@ -1,0 +1,372 @@
+我有一个java sprintboot后端，以下是文件结构：
+bamboohub
+|--controller
+|  |--BookController.java
+|  |--ParagraphController.java
+|--converter
+|  |--BookConverter.java
+|  |--ParagraphConverter.java
+|  |--BookConverterImpl.java
+|  |--ParagraphConverterImpl.java
+|--dao
+|  |Book.java
+|  |BookRepo.java
+|  |Paragraph.java
+|  |ParagraphRepo.java
+|--dto
+|  |--BookDTO.java
+|  |--ParagraphDTO.java
+|--request
+|  |--BookRequest.java
+|  |--ParagraphRequest.java
+|--service
+|  |--BookService.java
+|  |--ParagraphService.java
+|  |--BookServiceImpl.java
+|  |--ParagraphServiceImpl.java
+|--Reponse.java
+|--BamboohubApplication.java
+
+
+以下是部分文件内容：
+BookController.java:
+package com.huex.bamboohub.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import com.huex.bamboohub.service.*;
+import com.huex.bamboohub.dto.*;
+import com.huex.bamboohub.request.*;
+import com.huex.bamboohub.Response;
+import static com.huex.bamboohub.Response.newFail;
+import java.util.List;
+@RestController
+public class BookController {
+    @Autowired
+    private BookService bookService;
+
+    @PostMapping("/book")
+    public Response<Long> addNewBook(@RequestBody BookRequest bookReq) {
+        try { 
+            return Response.newSuccess(bookService.addNewBook(bookReq));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/book/{id}")
+    public Response<BookDTO> getBookById(@PathVariable("id") Long id) {
+        try { 
+            return Response.newSuccess(bookService.getBookById(id));
+        } catch (Exception e) { 
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/books")
+    public Response<List<BookDTO>> getAllBooks() {
+        try { 
+            return Response.newSuccess(bookService.getAllBooks());
+        } catch (Exception e) { 
+            return newFail(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/book/{id}")
+    public Response<String> deleteBookById(@PathVariable("id") Long id) {
+        try { 
+            bookService.deleteBookById(id);
+            return Response.newSuccess("Book deleted successfully");
+        } catch (Exception e) { 
+            return Response.newFail(e.getMessage());
+        }
+    }
+}
+
+
+ParagraphController.java:
+package com.huex.bamboohub.controller;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import com.huex.bamboohub.service.*;
+import com.huex.bamboohub.dto.*;
+import com.huex.bamboohub.request.*;
+import com.huex.bamboohub.Response;
+
+@RestController
+public class ParagraphController {
+    @Autowired
+    private ParagraphService paragraphService;
+
+    @GetMapping("/book/{bookId}/paragraphs")
+    public Response<List<ParagraphDTO>> getParagraphsByBookId(@PathVariable("bookId") Long bookId) {
+        try {
+            return Response.newSuccess(paragraphService.getParagraphsByBookId(bookId));
+        } catch (Exception e) { 
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/book-title/{title}/paragraphs")
+    public Response<List<ParagraphDTO>> getParagraphsByTitle(@PathVariable("title") String title) {
+        try { 
+            return Response.newSuccess(paragraphService.getParagraphsByBookTitle(title));
+        } catch (Exception e) { 
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @PostMapping("/paragraph")
+    public Response<Long> addNewParagraph(@RequestBody ParagraphRequest paraReq) {
+        try { 
+            return Response.newSuccess(paragraphService.addNewParagraph(paraReq));
+        } catch (Exception e) { 
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/paragraph/{id}")
+    public Response<String> deleteParagraph(@PathVariable("id") Long id) {
+        try {
+            paragraphService.deleteParagraphById(id);
+            return Response.newSuccess("Paragraph deleted successfully.");
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/paragraph/{id}")
+    public Response<ParagraphDTO> getParagraphById(@PathVariable("id") Long id) {
+        try {
+            return Response.newSuccess(paragraphService.getParagraphById(id));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @PutMapping("/paragraph/{id}")
+    public Response<ParagraphDTO> updateParagraphById(
+        @PathVariable("id") Long id, 
+        @RequestParam(required=false) String author, 
+        @RequestParam(required=false) String content) 
+        //requires form instead of json body
+    {
+        try {
+            return Response.newSuccess(paragraphService.updateParagraphById(id, author, content));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @PutMapping("/paragraph/{id}/move-up")
+    public Response<ParagraphDTO> moveUpParagraphById(@PathVariable("id") Long id) {
+        try {
+            return Response.newSuccess(paragraphService.moveUpParagraphById(id));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @PutMapping("/paragraph/{id}/move-down")
+    public Response<ParagraphDTO> moveDownParagraphById(@PathVariable("id") Long id) {
+        try {
+            return Response.newSuccess(paragraphService.moveDownParagraphById(id));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/paragraph/{id}/get-book")
+    public Response<BookDTO> getBookByParagraphId(@PathVariable("id") Long id) {
+        try {
+            return Response.newSuccess(paragraphService.getBookByParaId(id));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/paragraphs")
+    public Response<List<ParagraphDTO>> getAllParagraphs() {
+        try {
+            return Response.newSuccess(paragraphService.getAllParagraphs());
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+}
+
+
+BookDTO.java:
+package com.huex.bamboohub.dto;
+
+public class BookDTO {
+    private Long id; //must be null for new books
+    private String title;
+    private Long startParaId;
+
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public String getTitle() {
+        return title;
+    }
+    public void setTitle(String title) {
+        this.title = title;
+    }
+    public Long getStartParaId() {
+        return startParaId;
+    }
+    public void setStartParaId(Long startParaId) {
+        this.startParaId = startParaId;
+    }
+}
+
+
+ParagraphDTO.java:
+package com.huex.bamboohub.dto;
+
+public class ParagraphDTO {
+    private Long id; //must be null for new paragraphs
+    private Long bookId;
+    private String author;
+    private String content;
+    private Long prevParaId;
+    private Long nextParaId;
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public Long getBookId() {        
+        return bookId;
+    }
+    public void setBookId(Long bookId) {
+        this.bookId = bookId;        
+    }
+    public String getAuthor() {
+        return author;
+    }
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+    public String getContent() {
+        return content;
+    }
+    public void setContent(String content) {
+        this.content = content;
+    }
+    public Long getPrevParaId() {
+        return prevParaId;
+    }
+    public void setPrevParaId(Long prevParaId) {
+        this.prevParaId = prevParaId;
+    }
+    public Long getNextParaId() {
+        return nextParaId;
+    }
+    public void setNextParaId(Long nextParaId) {
+        this.nextParaId = nextParaId;
+    }
+    
+}
+
+
+BookRequest.java:
+package com.huex.bamboohub.request;
+
+public class BookRequest {
+    private String title;
+    public String getTitle() {
+        return title;
+    }
+    public void setTitle(String title) {
+        this.title = title;
+    }
+}
+
+
+ParagraphRequest.java:
+package com.huex.bamboohub.request;
+
+public class ParagraphRequest {
+    private String author;
+    private String content;
+    private Long prevParaId;
+    public String getAuthor() {
+        return author;
+    }
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+    public String getContent() {
+        return content;
+    }
+    public void setContent(String content) {
+        this.content = content;
+    }
+    public Long getPrevParaId() {
+        return prevParaId;
+    }
+    public void setPrevParaId(Long prevParaId) {
+        this.prevParaId = prevParaId;
+    }
+    
+}
+
+
+
+Response.java:
+package com.huex.bamboohub;
+
+public class Response<T> {
+    private T data;
+    private Boolean success;
+    private String errorMsg;
+
+    public static <K> Response<K> newSuccess(K data) {
+        Response<K> response=new Response<>();
+        response.setData(data);
+        response.setSuccess(true);
+        return response;
+    }
+
+    public static <K> Response<K> newFail(String errorMsg) {
+        Response<K> response=new Response<>();
+        response.setSuccess(false);
+        response.setErrorMsg(errorMsg);
+        return response;
+    }
+
+    public T getData() {
+        return data;
+    }
+    public void setData(T data) {
+        this.data = data;
+    }
+    public Boolean isSuccess() {
+        return success;
+    }
+    public void setSuccess(Boolean success) {
+        this.success = success;
+    }
+    public String getErrorMsg() {
+        return errorMsg;
+    }
+    public void setErrorMsg(String errorMsg) {
+        this.errorMsg = errorMsg;
+    }
+}
+
+
+
+帮我用vue框架写一个完整的小说接龙前端页面，要求实现所有后端接口对应的功能，要求正确对接接口，并用优美的UI设计
+生成所有完整代码并告诉我完整的文件结构和启动方式。
