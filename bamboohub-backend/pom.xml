@@ -9,8 +9,8 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.huex</groupId>
-	<artifactId>bamboohub</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<artifactId>Bamboohub-backend</artifactId>
+	<version>0.0.2</version>
 	<name>bamboohub</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
