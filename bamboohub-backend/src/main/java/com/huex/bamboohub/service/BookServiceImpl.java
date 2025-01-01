@@ -10,6 +10,7 @@ import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.dao.*;
 import com.huex.bamboohub.request.*;
 import com.huex.bamboohub.converter.*;
+import com.huex.bamboohub.util.*;
 
 @Service
 public class BookServiceImpl implements BookService {
@@ -20,10 +21,19 @@ public class BookServiceImpl implements BookService {
     private ParagraphRepo paraRepo;
 
     @Autowired
-    private BookConverterImpl bookConverter;
+    private RoleRepo roleRepo;
+
+    @Autowired
+    private BookConverter bookConverter;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private RoleUtil roleUtil;
 
     @Override
-    public Long addNewBook(BookRequest bookReq) throws IllegalArgumentException {
+    public Long addNewBook(String token, BookRequest bookReq) throws IllegalArgumentException {
         List<Book> books = bookRepo.findByTitle(bookReq.getTitle());
         if (!CollectionUtils.isEmpty(books)) {
             throw new IllegalArgumentException("Book title "+bookReq.getTitle()+" already exists.");
@@ -39,19 +49,56 @@ public class BookServiceImpl implements BookService {
         savedBook.setStartPara(savedPara);
         paraRepo.save(savedPara);
         bookRepo.save(savedBook);
+
+        User owner=jwtUtil.parseUser(token);
+        roleUtil.putRole(owner, savedBook, Role.RoleType.OWNER);
+
         return savedBook.getId();
     }
 
     @Override
-    public BookDTO getBookById(Long id) throws IllegalArgumentException {
+    public BookDTO getBookById(String token, Long id) throws IllegalArgumentException {
         Book book = bookRepo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Book with id "+id+" not found."));
+        if (!book.getIsPublic() && !roleUtil.canView(token,id)) { 
+            throw new IllegalArgumentException("No permission to access book.");
+        }
         return bookConverter.toDTO(book);
     }
 
     @Override
-    public List<BookDTO> getAllBooks() {
-        List<Book> books = bookRepo.findAll();
+    public List<Long> getAllPrivateBookIds(String token) {
+        List<Role> roles=roleRepo.findByUser(jwtUtil.parseUser(token));
+        List<Long> bookIds = new ArrayList<>();
+        for (Role role : roles) {
+            bookIds.add(role.getBook().getId());
+        }
+        return bookIds;
+    }
+
+    @Override
+    public List<Long> getAllPublicBookIds() {
+        List<Book> books = bookRepo.findByIsPublic(true);
+        List<Long> bookIds = new ArrayList<>();
+        for (Book book : books) {
+            bookIds.add(book.getId());
+        }
+        return bookIds;
+    }
+
+    @Override
+    public List<BookDTO> getAllPrivateBooks(String token) {
+        List<Role> roles=roleRepo.findByUser(jwtUtil.parseUser(token));
+        List<BookDTO> bookDTOs = new ArrayList<>();
+        for (Role role : roles) {
+            bookDTOs.add(bookConverter.toDTO(role.getBook()));
+        }
+        return bookDTOs;
+    }
+
+    @Override
+    public List<BookDTO> getAllPublicBooks() {
+        List<Book> books = bookRepo.findByIsPublic(true);
         List<BookDTO> bookDTOs = new ArrayList<>();
         for (Book book : books) {
             bookDTOs.add(bookConverter.toDTO(book));
@@ -60,28 +107,33 @@ public class BookServiceImpl implements BookService {
     }
     
     @Override
-    public void deleteBookById(Long id) throws IllegalArgumentException {
-        bookRepo.findById(id)
-            .orElseThrow(()-> new IllegalArgumentException("Book with id "+id+" not found."));
+    public void deleteBookById(String token, Long id) throws IllegalArgumentException {
+        Book book=bookRepo.findById(id)
+            .orElseThrow(()-> new IllegalArgumentException("No permission to delete book."));
+        if (!roleUtil.isOwner(token,id)) {
+            throw new IllegalArgumentException("No permission to delete book.");
+        }
+        List<Role> roles=roleRepo.findByBook(book);
+        System.out.println("to delete book");
         bookRepo.deleteById(id);
+        System.out.println("deleted book");
+        // for (Role role : roles) {
+        //     roleRepo.deleteById(role.getId());
+        // }
     }
 
     @Override
-    public BookDTO updateBookById(Long id, BookUpdateRequest bookUpdReq) throws IllegalArgumentException {
+    public BookDTO updateBookById(String token, Long id, BookUpdateRequest bookUpdReq) throws IllegalArgumentException {
         Book book = bookRepo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Book with id "+id+" not found."));
+        if (!roleUtil.canEdit(token,id)) {
+            throw new IllegalArgumentException("No permission to update book.");
+        }
         book.setTitle(bookUpdReq.getTitle());
+        book.setIsPublic(bookUpdReq.getIsPublic());
         bookRepo.save(book);
         return bookConverter.toDTO(book);
     }
     
-    @Override
-    public List<Long> getAllBookIds() {
-        List<Book> books = bookRepo.findAll();
-        List<Long> bookIds = new ArrayList<>();
-        for (Book book : books) {
-            bookIds.add(book.getId());
-        }
-        return bookIds;
-    }
+    
 }

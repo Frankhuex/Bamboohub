@@ -4,7 +4,6 @@
 
 <template>
   <div class="app">
-    <!-- <ParagraphList class="paragraph-list" /> -->
     <router-view></router-view>
   </div>
 </template>

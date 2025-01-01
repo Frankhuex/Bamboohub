@@ -21,6 +21,14 @@ public class Book {
     @JoinColumn(name="start_para_id",nullable=true)
     private Paragraph startPara; //Blank paragraph created on book creation
 
+    @Column(name="is_public")
+    private Boolean isPublic;
+
+
+    //以下两个是必要的
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL,orphanRemoval=true)
+    private List<Role> roles;
+
     @OneToMany(mappedBy="book",cascade=CascadeType.ALL,orphanRemoval=true)
     private List<Paragraph> paragraphs=new ArrayList<>();
 
@@ -51,6 +59,22 @@ public class Book {
         this.startPara = startPara;
     }
 
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
+    }
+
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
+    }
+
     public List<Paragraph> getParagraphs() {
         return paragraphs;
     }
@@ -58,5 +82,6 @@ public class Book {
     public void setParagraphs(List<Paragraph> paragraphs) {
         this.paragraphs = paragraphs;
     }
+
 
 }

@@ -3,6 +3,7 @@ package com.huex.bamboohub.request;
 public class ParagraphUpdateRequest {
     private String author;
     private String content;
+
     public String getAuthor() {
         return author;
     }
@@ -15,6 +16,7 @@ public class ParagraphUpdateRequest {
     public void setContent(String content) {
         this.content = content;
     }
+
 
     
 }

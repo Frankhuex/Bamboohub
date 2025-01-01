@@ -13,10 +13,12 @@
           </p>
         </article>
 
-        <button @click="editContent">编辑</button>
-        <button @click="deleteParagraph">删除</button>
-        <button @click="moveUpParagraph">上移</button>
-        <button @click="moveDownParagraph">下移</button>
+        <div v-if="canEdit">
+          <button @click="editContent">编辑</button>
+          <button @click="deleteParagraph">删除</button>
+          <button @click="moveUpParagraph">上移</button>
+          <button @click="moveDownParagraph">下移</button>
+        </div>
       </div>
 
       <!-- 编辑模式: 显示表单 -->
@@ -36,7 +38,7 @@
       </form>
     </div>
 
-    <div>
+    <div v-if="canEdit">
       <button class="btn-add-para" v-if="!editing && !addingParagraph" @click="addParagraph">
         +
       </button>
@@ -67,7 +69,8 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { BACKEND_URL } from '@/constants'
-
+//import { useRouter } from 'vue-router'
+//const router = useRouter()
 const props = defineProps(['paraId'])
 const emit = defineEmits([
   'loadedNextParaId',
@@ -94,21 +97,50 @@ const editedContent = ref('') // 存储编辑的 content
 
 const addingParagraph = ref(false)
 
+const roleType = ref('')
+const canEdit = ref(false)
+
 // 初始化加载数据
 onMounted(async () => {
   try {
+    const token = localStorage.getItem('token')
     loading.value = true
-    const response = await axios.get(`${BACKEND_URL}/paragraph/${props.paraId}`)
+    let response = await axios.get(`${BACKEND_URL}/paragraph/${props.paraId}`, {
+      headers: {
+        Authorization: token,
+      },
+    })
     paraDTO.value = response.data.data
     success.value = response.data.success
     errorMsg.value = response.data.errorMsg
-    //console.log(paraDTO.value)
-    //console.log(response.data)
-    if (response.data.data.nextParaId) {
-      emit('loadedNextParaId', response.data.data.nextParaId)
+    if (success.value) {
+      //console.log(paraDTO.value)
+      //console.log(response.data)
+      if (response.data.data.nextParaId) {
+        emit('loadedNextParaId', response.data.data.nextParaId)
+      }
+    }
+
+    response = await axios.get(`${BACKEND_URL}/book/${paraDTO.value.bookId}/role`, {
+      headers: {
+        Authorization: localStorage.getItem('token'),
+      },
+    })
+    if (response.data.success) {
+      roleType.value = response.data.data
+      canEdit.value =
+        roleType.value === 'OWNER' || roleType.value === 'ADMIN' || roleType.value === 'EDITOR'
+      console.log(roleType.value)
+      loading.value = false
+      success.value = true
+    } else {
+      console.log('Failed to load role:', response.data.errorMsg)
+      loading.value = false
+      //router.push('/login')
     }
   } catch (e) {
     console.log(e)
+    //router.push('/login')
   } finally {
     loading.value = false
   }
@@ -129,10 +161,18 @@ const submitEdit = async () => {
     paraDTO.value.content = editedContent.value
 
     // 调用 API 提交更新的数据
-    const response = await axios.put(`${BACKEND_URL}/paragraph/${paraDTO.value.id}`, {
-      author: editedAuthor.value,
-      content: editedContent.value,
-    })
+    const response = await axios.put(
+      `${BACKEND_URL}/paragraph/${paraDTO.value.id}`,
+      {
+        author: editedAuthor.value,
+        content: editedContent.value,
+      },
+      {
+        headers: {
+          Authorization: localStorage.getItem('token'),
+        },
+      },
+    )
 
     if (response.data.success) {
       console.log('Paragraph updated successfully!')
@@ -140,6 +180,7 @@ const submitEdit = async () => {
       editing.value = false
     } else {
       console.log('Failed to update paragraph:', response.data.errorMsg)
+      //router.push('/login')
     }
   } catch (error) {
     console.error('Error submitting edit:', error)
@@ -160,11 +201,19 @@ const addParagraph = () => {
 const submitNewPara = async () => {
   try {
     // 调用 API 新增段落
-    const response = await axios.post(`${BACKEND_URL}/paragraph`, {
-      author: editedAuthor.value,
-      content: editedContent.value,
-      prevParaId: paraDTO.value.id,
-    })
+    const response = await axios.post(
+      `${BACKEND_URL}/paragraph`,
+      {
+        author: editedAuthor.value,
+        content: editedContent.value,
+        prevParaId: paraDTO.value.id,
+      },
+      {
+        headers: {
+          Authorization: localStorage.getItem('token'),
+        },
+      },
+    )
 
     if (response.data.success) {
       console.log('Paragraph added successfully!')
@@ -176,6 +225,7 @@ const submitNewPara = async () => {
       })
     } else {
       console.log('Failed to add paragraph:', response.data.errorMsg)
+      //router.push('/login')
     }
   } catch (error) {
     console.error('Error submitting new paragraph:', error)
@@ -191,7 +241,11 @@ const deleteParagraph = async () => {
   if (isConfirmed) {
     try {
       // 调用 API 删除段落
-      const response = await axios.delete(`${BACKEND_URL}/paragraph/${paraDTO.value.id}`)
+      const response = await axios.delete(`${BACKEND_URL}/paragraph/${paraDTO.value.id}`, {
+        headers: {
+          Authorization: localStorage.getItem('token'),
+        },
+      })
 
       if (response.data.success) {
         console.log('Paragraph deleted successfully!')
@@ -199,6 +253,7 @@ const deleteParagraph = async () => {
         emit('deletedParagraph', paraDTO.value.id)
       } else {
         console.log('Failed to delete paragraph:', response.data.errorMsg)
+        //router.push('/login')
       }
     } catch (error) {
       console.error('Error deleting paragraph:', error)
@@ -208,10 +263,20 @@ const deleteParagraph = async () => {
 
 const moveUpParagraph = async () => {
   try {
-    const response = await axios.put(`${BACKEND_URL}/paragraph/${paraDTO.value.id}/move-up`)
+    const response = await axios.post(
+      `${BACKEND_URL}/paragraph/${paraDTO.value.id}/move-up`,
+      {},
+      {
+        headers: {
+          Authorization: localStorage.getItem('token'),
+        },
+      },
+    )
     if (response.data.success) {
       console.log('Paragraph moved up successfully!')
       emit('movedUpParagraph', paraDTO.value.id)
+    } else {
+      //router.push('/login')
     }
   } catch (error) {
     console.error('Error moving up paragraph:', error)
@@ -220,10 +285,20 @@ const moveUpParagraph = async () => {
 
 const moveDownParagraph = async () => {
   try {
-    const response = await axios.put(`${BACKEND_URL}/paragraph/${paraDTO.value.id}/move-down`)
+    const response = await axios.post(
+      `${BACKEND_URL}/paragraph/${paraDTO.value.id}/move-down`,
+      {},
+      {
+        headers: {
+          Authorization: localStorage.getItem('token'),
+        },
+      },
+    )
     if (response.data.success) {
       console.log('Paragraph moved down successfully!')
       emit('movedDownParagraph', paraDTO.value.id)
+    } else {
+      //router.push('/login')
     }
   } catch (error) {
     console.error('Error moving down paragraph:', error)

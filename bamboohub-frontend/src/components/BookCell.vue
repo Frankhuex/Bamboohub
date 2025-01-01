@@ -7,8 +7,10 @@
         </h1>
         <div class="buttons">
           <button @click="enterBook">进入小说</button>
-          <button @click="editBook">编辑信息</button>
-          <button @click="deleteBook">删除</button>
+          <div v-if="canEdit">
+            <button @click="editBook">编辑信息</button>
+            <button @click="deleteBook">删除</button>
+          </div>
         </div>
 
         <p><br /></p>
@@ -17,10 +19,23 @@
       <!-- 编辑模式: 显示表单 -->
       <form v-else @submit.prevent="submitEdit">
         <br /><br />
-        <div>
+
+        <!-- 标题 -->
+        <div class="form-item">
           <label for="title">标题:</label>
           <input v-model="editedTitle" type="text" id="title" />
         </div>
+
+        <!-- 权限单选题 -->
+        <div class="form-item">
+          <label for="isPublic">权限:</label>
+          <div class="radio-buttons">
+            <div><input type="radio" value="true" v-model="editedIsPublic" />公共</div>
+            <div><input type="radio" value="false" v-model="editedIsPublic" />私密</div>
+          </div>
+        </div>
+
+        <!-- 按钮 -->
         <div class="buttons">
           <button type="button" @click="cancelEdit">取消</button>
           <button type="submit">提交</button>
@@ -38,7 +53,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { BACKEND_URL } from '@/constants'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const props = defineProps(['bookId'])
 const emit = defineEmits(['deletedBook'])
@@ -47,27 +62,57 @@ const bookDTO = ref({
   id: null,
   title: '',
   startParaId: null,
+  isPublic: false,
 })
+
+const roleType = ref('')
+const canEdit = ref(false)
 
 const loading = ref(true)
 
 const success = ref(false)
 const editing = ref(false) // 控制是否处于编辑模式
 const editedTitle = ref('') // 存储编辑的title
-
+const editedIsPublic = ref(false) // 存储编辑的权限
+const router = useRouter()
+const route = useRoute()
 onMounted(async () => {
   try {
     // 获取数据
-    const response = await axios.get(`${BACKEND_URL}/book/${props.bookId}`)
+    let response = await axios.get(`${BACKEND_URL}/book/${props.bookId}`, {
+      headers: {
+        Authorization: localStorage.getItem('token'),
+      },
+    })
 
     if (response.data.success) {
       console.log('Book loaded successfully!')
       bookDTO.value = response.data.data
+
       loading.value = false
       success.value = true
     } else {
       console.log('Failed to load book:', response.data.errorMsg)
       loading.value = false
+      //router.push('/login')
+    }
+
+    response = await axios.get(`${BACKEND_URL}/book/${props.bookId}/role`, {
+      headers: {
+        Authorization: localStorage.getItem('token'),
+      },
+    })
+    if (response.data.success) {
+      roleType.value = response.data.data
+      canEdit.value =
+        roleType.value === 'OWNER' || roleType.value === 'ADMIN' || roleType.value === 'EDITOR'
+      console.log(roleType.value)
+      loading.value = false
+      success.value = true
+    } else {
+      console.log('Failed to load role:', response.data.errorMsg)
+      loading.value = false
+      //router.push('/login')
     }
   } catch (error) {
     console.error('Error loading book:', error)
@@ -75,7 +120,6 @@ onMounted(async () => {
   }
 })
 
-const router = useRouter()
 const enterBook = () => {
   router.push({
     name: 'BookContent',
@@ -88,26 +132,40 @@ const enterBook = () => {
 // 切换到编辑模式
 const editBook = () => {
   editedTitle.value = bookDTO.value.title
+  editedIsPublic.value = bookDTO.value.isPublic
   editing.value = true
 }
 
 // 提交编辑
 const submitEdit = async () => {
   try {
-    // 更新数据
-    bookDTO.value.title = editedTitle.value
-
     // 调用 API 提交更新的数据
-    const response = await axios.put(`${BACKEND_URL}/book/${bookDTO.value.id}`, {
-      title: editedTitle.value,
-    })
+    const response = await axios.put(
+      `${BACKEND_URL}/book/${bookDTO.value.id}`,
+      {
+        title: editedTitle.value,
+        isPublic: editedIsPublic.value,
+      },
+      {
+        headers: {
+          Authorization: localStorage.getItem('token'),
+        },
+      },
+    )
 
     if (response.data.success) {
+      if (route.name === 'BookListPublic' && editedIsPublic.value === 'false') {
+        console.log('Book is now private')
+        emit('deletedBook', bookDTO.value.id)
+      }
+      bookDTO.value.title = editedTitle.value
+      bookDTO.value.isPublic = editedIsPublic.value
       console.log('Book updated successfully!')
       console.log(response.data.data)
       editing.value = false
     } else {
       console.log('Failed to update book:', response.data.errorMsg)
+      //router.push('/login')
     }
   } catch (error) {
     console.error('Error submitting edit:', error)
@@ -124,7 +182,11 @@ const deleteBook = async () => {
   if (isConfirmed) {
     try {
       // 调用 API 删除段落
-      const response = await axios.delete(`${BACKEND_URL}/book/${bookDTO.value.id}`)
+      const response = await axios.delete(`${BACKEND_URL}/book/${bookDTO.value.id}`, {
+        headers: {
+          Authorization: localStorage.getItem('token'),
+        },
+      })
 
       if (response.data.success) {
         console.log('Book deleted successfully!')
@@ -132,6 +194,7 @@ const deleteBook = async () => {
         emit('deletedBook', bookDTO.value.id)
       } else {
         console.log('Failed to delete book:', response.data.errorMsg)
+        //router.push('/login')
       }
     } catch (error) {
       console.error('Error deleting book:', error)
@@ -148,7 +211,7 @@ button {
 form {
   display: flex;
   flex-direction: column; /* 纵向排列表单元素 */
-  align-items: center; /* 水平居中表单 */
+  align-items: flex-start; /* 左对齐 */
   height: 100%; /* 确保表单占满父容器的高度 */
 }
 
@@ -208,5 +271,24 @@ form div {
   width: 100%; /* 按钮宽度和父容器相同 */
   display: flex; /* 使用 Flexbox 居中按钮 */
   justify-content: center; /* 水平居中按钮 */
+}
+
+/* 修复标签和输入框的对齐问题 */
+.form-item {
+  display: flex;
+  flex-direction: row; /* 横向排列 */
+  align-items: center; /* 标签和控件垂直居中 */
+  margin-bottom: 10px;
+  width: 100%; /* 确保每一项占满宽度 */
+}
+
+.form-item label {
+  width: 80px; /* 固定标签宽度，确保对齐 */
+}
+
+.radio-buttons {
+  display: inline-flex; /* 使用 inline-flex 保证在一行显示 */
+  flex-direction: row; /* 横向排列 */
+  align-items: center;
 }
 </style>

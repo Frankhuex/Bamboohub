@@ -27,10 +27,11 @@ a,
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 0px) {
   body {
     display: flex;
     place-items: center;
+    margin-top: 2rem;
   }
 
   /* #app {

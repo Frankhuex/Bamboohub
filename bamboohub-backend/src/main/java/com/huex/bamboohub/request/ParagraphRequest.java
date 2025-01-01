@@ -4,6 +4,7 @@ public class ParagraphRequest {
     private String author;
     private String content;
     private Long prevParaId;
+
     public String getAuthor() {
         return author;
     }
@@ -22,5 +23,6 @@ public class ParagraphRequest {
     public void setPrevParaId(Long prevParaId) {
         this.prevParaId = prevParaId;
     }
+
     
 }

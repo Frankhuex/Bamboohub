@@ -11,56 +11,66 @@ import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.dao.*;
 import com.huex.bamboohub.request.*;
 import com.huex.bamboohub.converter.*;
+import com.huex.bamboohub.util.*;
 
 import jakarta.transaction.Transactional;
 
 @Service
 public class ParagraphServiceImpl implements ParagraphService {
-    @Autowired
-    private ParagraphRepo paraRepo;
-    
-    @Autowired
-    private BookRepo bookRepo;
-
-    @Autowired
-    private ParagraphConverter paraConverter;
-
-    @Autowired
-    private BookConverterImpl bookConverter;
+    @Autowired private ParagraphRepo paraRepo;
+    @Autowired private RoleUtil roleUtil;
+    @Autowired private BookRepo bookRepo;
+    @Autowired private ParagraphConverter paraConverter;
+    @Autowired private BookConverter bookConverter;
 
     
 
     @Override
-    public List<ParagraphDTO> getParagraphsByBookId(Long bookId) throws IllegalArgumentException {
+    public List<ParagraphDTO> getParagraphsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
+        if (!book.getIsPublic() && !roleUtil.canView(token,bookId)) {
+            throw new IllegalArgumentException("No permission to get paragraphs.");
+        }
         return getParagraphsByBookDAO(book);
     }
 
     @Override
-    public List<ParagraphDTO> getParagraphsByBookTitle(String bookTitle) throws IllegalArgumentException {
+    public List<ParagraphDTO> getParagraphsByBookTitle(String token,String bookTitle) throws IllegalArgumentException {
         List<Book> books = bookRepo.findByTitle(bookTitle);
         if (books.isEmpty()) {
             throw new IllegalArgumentException("Book with title " + bookTitle + " not found.");
         } else if (books.size() > 1) {
             throw new IllegalArgumentException("More than one book with title " + bookTitle + " found.");
         }
-        return getParagraphsByBookDAO(books.get(0));
+        Book book=books.get(0);
+        if (!book.getIsPublic() && !roleUtil.canView(token,book.getId())) {
+            throw new IllegalArgumentException("No permission to get paragraphs.");
+        }
+        return getParagraphsByBookDAO(book);
     }
 
     @Override
-    public List<Long> getParaIdsByBookId(Long bookId) throws IllegalArgumentException {
+    public List<Long> getParaIdsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
+        if (!book.getIsPublic() && !roleUtil.canView(token,bookId)) {
+            throw new IllegalArgumentException("No permission to get paragraph ids.");
+        }
         return getParaIdsByBookDAO(book);
     }
 
 
 
     @Override
-    public Long addNewParagraph(ParagraphRequest paraReq) throws IllegalArgumentException {
+    public Long addNewParagraph(String token,ParagraphRequest paraReq) throws IllegalArgumentException {
         Paragraph prevPara=paraRepo.findById(paraReq.getPrevParaId())
             .orElseThrow(()->new IllegalArgumentException("Previous paragraph with id "+paraReq.getPrevParaId()+" not found."));
+        
+        if (!roleUtil.canEdit(token,prevPara.getBook().getId())) {
+            throw new IllegalArgumentException("No permission to add new paragraph.");
+        }
+        
         Paragraph para=paraRepo.save(paraConverter.toDAO(paraReq));
         
         Long thisId=para.getId();
@@ -82,9 +92,14 @@ public class ParagraphServiceImpl implements ParagraphService {
     }
 
     @Override
-    public void deleteParagraphById(Long id) throws IllegalArgumentException {
+    public void deleteParagraphById(String token,Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
+
+        if (!roleUtil.canEdit(token,paragraph.getBook().getId())) {
+            throw new IllegalArgumentException("No permission to delete paragraph.");
+        }
+        
         if (paragraph.getBook().getStartPara().getId().equals(id)) {
             throw new IllegalArgumentException("Cannot delete the start paragraph of a book.");
         }
@@ -104,17 +119,23 @@ public class ParagraphServiceImpl implements ParagraphService {
     }
 
     @Override
-    public ParagraphDTO getParagraphById(Long id) throws IllegalArgumentException {
+    public ParagraphDTO getParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
+        if (!paragraph.getBook().getIsPublic() && !roleUtil.canView(token,paragraph.getBook().getId())) {
+            throw new IllegalArgumentException("No permission to get paragraph.");
+        }
         return paraConverter.toDTO(paragraph);
     }
 
     @Override
     @Transactional
-    public ParagraphDTO updateParagraphById(Long id,ParagraphUpdateRequest paraUpdReq) throws IllegalArgumentException {
+    public ParagraphDTO updateParagraphById(String token, Long id,ParagraphUpdateRequest paraUpdReq) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
+        if (!roleUtil.canEdit(token,paragraph.getBook().getId())) {
+            throw new IllegalArgumentException("No permission to update paragraph.");
+        }
         String author=paraUpdReq.getAuthor();
         String content=paraUpdReq.getContent();
         if (StringUtils.hasText(author) && !author.equals(paragraph.getAuthor())) {
@@ -128,10 +149,15 @@ public class ParagraphServiceImpl implements ParagraphService {
     }
 
     @Override
-    public ParagraphDTO moveUpParagraphById(Long id) throws IllegalArgumentException {
+    public ParagraphDTO moveUpParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
         Book book=paragraph.getBook();
+
+        if (!roleUtil.canEdit(token,book.getId())) {
+            throw new IllegalArgumentException("No permission to move paragraph up.");
+        }
+
         if (book.getStartPara().getId().equals(id)) {
             throw new IllegalArgumentException("You cannot move the start paragraph.");
         }
@@ -172,10 +198,15 @@ public class ParagraphServiceImpl implements ParagraphService {
     }
 
     @Override
-    public ParagraphDTO moveDownParagraphById(Long id) throws IllegalArgumentException {
+    public ParagraphDTO moveDownParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
         Book book=paragraph.getBook();
+
+        if (!roleUtil.canEdit(token,book.getId())) {
+            throw new IllegalArgumentException("No permission to move paragraph down.");
+        }
+
         if (book.getStartPara().getId().equals(id)) {
             throw new IllegalArgumentException("You cannot move the start paragraph.");
         }
@@ -215,15 +246,18 @@ public class ParagraphServiceImpl implements ParagraphService {
     }
 
     @Override
-    public BookDTO getBookByParaId(Long paraId) throws IllegalArgumentException {
+    public BookDTO getBookByParaId(String token, Long paraId) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(paraId)
             .orElseThrow(() -> new IllegalArgumentException("Paragraph with id "+paraId+" not found."));
         Book book = paragraph.getBook();
+        if (!roleUtil.canView(token,book.getId())) {
+            throw new IllegalArgumentException("No permission to get book.");
+        }
         return bookConverter.toDTO(book); 
     }
 
     @Override
-    public List<ParagraphDTO> getAllParagraphs() {
+    public List<ParagraphDTO> getAllParagraphs(String token) {
         List<Paragraph> paragraphs = paraRepo.findAll();
         return paraConverter.toDTOs(paragraphs);
     }

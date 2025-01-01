@@ -4,10 +4,13 @@ import com.huex.bamboohub.request.*;
 import java.util.List;
 
 public interface BookService {
-    Long addNewBook(BookRequest bookDTO);
-    BookDTO getBookById(Long id);
-    List<BookDTO> getAllBooks();
-    void deleteBookById(Long id);
-    BookDTO updateBookById(Long id, BookUpdateRequest bookUpdReq);
-    List<Long> getAllBookIds();
+    Long addNewBook(String token, BookRequest bookDTO);
+    BookDTO getBookById(String token, Long id);
+    List<Long> getAllPrivateBookIds(String token);
+    List<Long> getAllPublicBookIds();
+    List<BookDTO> getAllPrivateBooks(String token); 
+    List<BookDTO> getAllPublicBooks();
+    void deleteBookById(String token, Long id);
+    BookDTO updateBookById(String token, Long id, BookUpdateRequest bookUpdReq);
+    
 }

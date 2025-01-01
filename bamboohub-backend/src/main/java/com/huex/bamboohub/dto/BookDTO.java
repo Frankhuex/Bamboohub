@@ -4,6 +4,7 @@ public class BookDTO {
     private Long id; //must be null for new books
     private String title;
     private Long startParaId;
+    private Boolean isPublic;
 
     public Long getId() {
         return id;
@@ -22,5 +23,11 @@ public class BookDTO {
     }
     public void setStartParaId(Long startParaId) {
         this.startParaId = startParaId;
+    }
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
     }
 }

@@ -1,72 +1,15 @@
-<!-- <template>
-  <div v-if="success" class="paragraph">
-    <p class="author" @click="$emit('clickEditAuthor')">
-      {{ data.author }}
-    </p>
-
-    <article>
-      <p class="content" @click="$emit('clickEditContent')">
-        {{ data.content }}
-      </p>
-    </article>
-
-    <slot></slot>
-  </div>
-  <div v-else>Failed to load...</div>
-</template>
-
-
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
-import { defineProps, defineEmits } from 'vue'
-import { BACKEND_URL } from '@/constants'
-
-const props = defineProps(['bookId'])
-defineEmits(['clickEditAuthor', 'clickEditContent'])
-
-const loading = ref(true)
-
-const data = ref({
-  id: null,
-  title: '',
-  startParaId: null,
-})
-const success = ref(false)
-const errorMsg = ref('')
-
-const paraIds = ref([])
-
-onMounted(async () => {
-  try {
-    loading.value = true
-    const response = await axios.get(`${BACKEND_URL}/book/${props.paraId}`)
-    data.value = response.data.data
-    success.value = response.data.success
-    errorMsg.value = response.data.errorMsg
-  } catch (e) {
-    console.log(e)
-  } finally {
-    loading.value = false
-  }
-})
-
-async function loadPara(paraId) {
-  if (!paraId) return
-  loading.value=true
-  try {
-    const response = await axios.get(`${BACKEND_URL}/paragraph/${props.paraId}`)
-
-  }
-}
-</script> -->
-
 <template>
   <div class="book-info">
     <h1>{{ bookDTO.title }}</h1>
-    <button @click="toBookList">回到首页</button>
+    <div class="btn-group">
+      <button @click="toBookList">回到首页</button>
+      <br /><br />
+      <button @click="handleShowMemberList">成员列表</button>
+    </div>
     <p><br /></p>
+  </div>
+  <div v-if="showMemberList">
+    <MemberList :bookId="$route.params.bookId" @closeWindow="handleCloseMemberList" />
   </div>
   <div class="paragraphs">
     <ParagraphCell
@@ -88,6 +31,7 @@ import ParagraphCell from './ParagraphCell.vue'
 import axios from 'axios'
 import { BACKEND_URL } from '@/constants'
 import { useRouter } from 'vue-router'
+import MemberList from '@/components/MemberList.vue'
 
 const props = defineProps(['bookId'])
 
@@ -99,20 +43,25 @@ const bookDTO = ref({
 
 const paraIds = ref([]) // 用于存储段落 ID 列表
 
+const showMemberList = ref(false)
+
 const loading = ref(false)
 
 const router = useRouter()
 const toBookList = () => {
-  router.push({
-    name: 'BookList',
-  })
+  router.back()
 }
 
 onMounted(async () => {
   try {
     loading.value = true
-    let response = await axios.get(`${BACKEND_URL}/book/${props.bookId}`) // 获取书籍信息
-    //console.log(response.data)
+    const token = localStorage.getItem('token')
+    let response = await axios.get(`${BACKEND_URL}/book/${props.bookId}`, {
+      headers: {
+        Authorization: token,
+      },
+    }) // 获取书籍信息
+    console.log('Book Info', response.data)
     if (response.data.success) {
       bookDTO.value = response.data.data
       //console.log(bookDTO.value)
@@ -167,6 +116,14 @@ function handleMoveDownParagraph(paraId) {
     paraIds.value[index + 1] = paraId
     paraIds.value[index] = temp
   }
+}
+
+function handleCloseMemberList() {
+  showMemberList.value = false
+}
+
+function handleShowMemberList() {
+  showMemberList.value = true
 }
 </script>
 
