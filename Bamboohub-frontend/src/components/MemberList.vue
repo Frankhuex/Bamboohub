@@ -19,7 +19,7 @@
                   <th>用户名</th>
                   <th>昵称</th>
                   <th>权限</th>
-                  <th v-if="ownRoleType === 'OWNER' || ownRoleType === 'ADMIN'">操作</th>
+                  <th v-if="canAdmin">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -28,6 +28,7 @@
                   <td>{{ roles.owner.username }}</td>
                   <td>{{ roles.owner.nickname }}</td>
                   <td>书主</td>
+                  <td v-if="canAdmin"></td>
                 </tr>
 
                 <!-- 管理员 -->
@@ -41,6 +42,7 @@
                     </button>
                     <button class="kick-btn" @click="kickMember(admin.username)">踢出</button>
                   </td>
+                  <td v-else-if="canAdmin"></td>
                 </tr>
 
                 <!-- 编辑者 -->
@@ -54,6 +56,7 @@
                     </button>
                     <button class="kick-btn" @click="kickMember(editor.username)">踢出</button>
                   </td>
+                  <td v-else-if="canAdmin"></td>
                 </tr>
 
                 <!-- 查看者 -->
@@ -67,6 +70,7 @@
                     </button>
                     <button class="kick-btn" @click="kickMember(viewer.username)">踢出</button>
                   </td>
+                  <td v-else-if="canAdmin"></td>
                 </tr>
               </tbody>
             </table>
@@ -165,11 +169,16 @@ const roleRequest = ref({
 }) // 表单数据
 
 const ownRoleType = ref('')
-
+const hasLogined = ref(false)
+const canAdmin = ref(false)
 // 获取角色数据
 onMounted(async () => {
   try {
-    const token = localStorage.getItem('token') // 获取 token
+    let token = ''
+    if (localStorage.getItem('token')) {
+      token = localStorage.getItem('token') // 获取 token
+      hasLogined.value = true
+    }
     let response = await axios.get(`${BACKEND_URL}/book/${props.bookId}/roles`, {
       headers: {
         Authorization: token,
@@ -183,6 +192,9 @@ onMounted(async () => {
       },
     })
     ownRoleType.value = response.data.data
+    if (ownRoleType.value === 'ADMIN' || ownRoleType.value === 'OWNER') {
+      canAdmin.value = true
+    }
   } catch (error) {
     console.error('Error fetching roles:', error)
   } finally {
@@ -211,6 +223,7 @@ const cancelForm = () => {
 const submitRoleForm = async () => {
   try {
     const token = localStorage.getItem('token')
+
     const response = await axios.put(`${BACKEND_URL}/role`, roleRequest.value, {
       headers: {
         Authorization: token,
@@ -225,7 +238,7 @@ const submitRoleForm = async () => {
       alert('用户名不存在。')
     }
   } catch (error) {
-    alert('用户名不存在。')
+    alert('操作失败。')
     console.error('Error updating role:', error)
   }
 }
@@ -278,7 +291,7 @@ const loadRoles = async () => {
 </script>
 
 <style scoped>
-.member-list {
+.member-list1 {
   display: flex;
   flex-direction: column;
   align-items: center; /* 水平居中 */
@@ -294,6 +307,26 @@ const loadRoles = async () => {
   width: 350px; /* 设置组件宽度 */
   border-radius: 8px; /* 圆角边框 */
   max-height: 80vh; /* 最大高度为页面高度的80% */
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column; /* 子元素纵向排列 */
+  align-items: center;
+  text-align: left;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  width: 90%;
+  max-width: 450px;
+  border-radius: 8px;
+  max-height: 90vh;
+  overflow: hidden;
 }
 
 .close-btn {
@@ -339,10 +372,16 @@ input[type='radio'] {
   margin-bottom: 10px;
 }
 
-.table-container {
+/* .table-container {
   max-height: 400px;
   overflow-y: auto;
   margin-top: 20px;
+} */
+.table-container {
+  flex: 1; /* 占据剩余的可用空间 */
+  width: 100%;
+  overflow-y: auto; /* 表格在容器内滚动 */
+  max-height: calc(100vh - 200px);
 }
 
 table {
@@ -350,6 +389,7 @@ table {
   border-collapse: collapse;
   margin-bottom: 20px;
   border: 2px solid black;
+  table-layout: fixed;
 }
 
 table th,

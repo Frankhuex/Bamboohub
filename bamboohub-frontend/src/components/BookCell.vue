@@ -78,12 +78,17 @@ const router = useRouter()
 const route = useRoute()
 onMounted(async () => {
   try {
+    let token = ''
+    if (localStorage.getItem('token')) {
+      token = localStorage.getItem('token')
+    }
     // 获取数据
     let response = await axios.get(`${BACKEND_URL}/book/${props.bookId}`, {
       headers: {
-        Authorization: localStorage.getItem('token'),
+        Authorization: token,
       },
     })
+    console.log(response.data)
 
     if (response.data.success) {
       console.log('Book loaded successfully!')

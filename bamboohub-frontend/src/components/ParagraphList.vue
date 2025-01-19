@@ -2,7 +2,7 @@
   <div class="book-info">
     <h1>{{ bookDTO.title }}</h1>
     <div class="btn-group">
-      <button @click="toBookList">回到首页</button>
+      <button @click="toBookList">返回上页</button>
       <br /><br />
       <button @click="handleShowMemberList">成员列表</button>
     </div>
@@ -55,7 +55,10 @@ const toBookList = () => {
 onMounted(async () => {
   try {
     loading.value = true
-    const token = localStorage.getItem('token')
+    let token = ''
+    if (localStorage.getItem('token')) {
+      token = localStorage.getItem('token')
+    }
     let response = await axios.get(`${BACKEND_URL}/book/${props.bookId}`, {
       headers: {
         Authorization: token,
@@ -130,7 +133,7 @@ function handleShowMemberList() {
 <style scoped>
 .book-info,
 .paragraphs {
-  max-width: 80%;
+  /* max-width: 100%; */
   margin: 0 auto;
 }
 

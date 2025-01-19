@@ -28,6 +28,7 @@
     <div class="buttons">
       <br />
       <button @click="goLogin">用户登录</button>
+      <button @click="goTourist">游客访问</button>
     </div>
   </div>
 </template>
@@ -69,13 +70,15 @@ const submitRegister = async () => {
       password: password.value,
       nickname: nickname.value,
     })
-    userDTO.value = response.data.data
-    console.log(userDTO.value)
-    localStorage.setItem('token', userDTO.value.token)
-
-    console.log(localStorage.getItem('token'))
-
-    router.push('/')
+    if (response.data.success === true) {
+      userDTO.value = response.data.data
+      console.log(userDTO.value)
+      localStorage.setItem('token', userDTO.value.token)
+      console.log(localStorage.getItem('token'))
+      router.push('/')
+    } else {
+      alert('注册失败！')
+    }
   } catch (e) {
     console.log(e)
   }
@@ -86,9 +89,14 @@ const goLogin = () => {
     name: 'Login',
   })
 }
+
+const goTourist = () => {
+  localStorage.removeItem('token')
+  router.push('/')
+}
 </script>
 
-<style scoped>
+<!-- <style scoped>
 /* 整个页面居中 */
 .register-container {
   display: flex;
@@ -143,6 +151,71 @@ button {
   color: white;
   cursor: pointer;
   font-size: 16px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+button:hover {
+  background-color: #e76f51;
+}
+</style> -->
+
+<style scoped>
+/* 整个页面居中 */
+.register-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+}
+
+.register {
+  width: 350px; /* 设置表单的固定宽度 */
+  padding: 20px;
+  background-color: #ccaf70;
+  border: 1px solid #000;
+  border-radius: 5px;
+  box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* 每一行输入项 */
+.form-group {
+  display: flex;
+  align-items: center; /* 使 label 和 input 垂直居中对齐 */
+  margin-bottom: 15px; /* 每一行之间的间距 */
+}
+
+/* 标签样式 */
+.form-group label {
+  width: 120px; /* 设置标签宽度固定 */
+  text-align: right; /* 标签文本右对齐 */
+  margin-right: 15px; /* 标签与输入框之间的间距 */
+}
+
+/* 输入框样式 */
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+/* 按钮样式 */
+.buttons {
+  text-align: center;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #f4a261;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 button:hover {

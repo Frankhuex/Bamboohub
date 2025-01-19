@@ -1,7 +1,7 @@
 <template>
   <div class="navbar">
-    <div class="navbar-left">
-      <span class="site-name">竹里馆 Bamboohub</span>
+    <div class="navbar-left" @click="router.push('/')">
+      <span class="site-name">竹里馆</span>
     </div>
     <div class="navbar-center">
       <!-- 显示当前选择按钮，点击展开下拉菜单 -->
@@ -18,12 +18,13 @@
       </div>
     </div>
 
-    <div class="navbar-right">
-      <div class="nav-btn" @click="toggleUserDropdown">
+    <div class="navbar-center">
+      <div v-if="hasLogined" class="nav-btn" @click="toggleUserDropdown">
         {{ userDTO.nickname }}
         <span class="arrow">&#x25BC;</span>
         <!-- 向下箭头 -->
       </div>
+      <div v-else class="nav-btn" @click="router.push({ name: 'Login' })">登入</div>
 
       <!-- 用户下拉菜单 -->
       <div v-if="userDropdownVisible" class="dropdown">
@@ -34,7 +35,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { BACKEND_URL } from '@/constants'
 import axios from 'axios'
@@ -50,25 +51,38 @@ const dropdownVisible = ref(false) // 控制图书下拉菜单显示/隐藏
 const userDropdownVisible = ref(false) // 控制用户下拉菜单显示/隐藏
 const currentSelection = ref('公共图书') // 当前选择的图书状态
 
+const hasLogined = ref(false) // 是否已登录
+onBeforeUnmount(() => {
+  // 组件销毁时移除事件监听
+  document.removeEventListener('click', handleClickOutside)
+})
 onMounted(async () => {
   // 获取用户信息
   try {
+    document.addEventListener('click', handleClickOutside)
     const token = localStorage.getItem('token')
-    if (!token) {
-      router.push({
-        name: 'Login',
+    if (token) {
+      hasLogined.value = true
+      let response = await axios.get(`${BACKEND_URL}/user/info`, {
+        headers: {
+          Authorization: localStorage.getItem('token'),
+        },
       })
-      return
+      console.log(response.data)
+      if (response.data.success) {
+        userDTO.value = response.data.data
+      } else {
+        hasLogined.value = false
+      }
+    } else {
+      hasLogined.value = false
     }
-    let response = await axios.get(`${BACKEND_URL}/user/info`, {
-      headers: {
-        Authorization: localStorage.getItem('token'),
-      },
-    })
-    console.log(response.data)
-    if (response.data.success) {
-      userDTO.value = response.data.data
-    }
+    // if (!token) {
+    // router.push({
+    //   name: 'BookListPublic',
+    // })
+    // return
+    // }
   } catch (e) {
     console.log(e)
     router.push({
@@ -78,6 +92,17 @@ onMounted(async () => {
 })
 
 const router = useRouter()
+
+const handleClickOutside = (event) => {
+  // 判断点击是否发生在下拉菜单或其按钮之外
+  const dropdown = document.querySelector('.dropdown')
+  const navBtn = document.querySelector('.nav-btn')
+
+  if (dropdown && !dropdown.contains(event.target) && !navBtn.contains(event.target)) {
+    dropdownVisible.value = false
+    userDropdownVisible.value = false
+  }
+}
 
 const getPublic = () => {
   currentSelection.value = '公共图书'
@@ -103,16 +128,18 @@ const logout = () => {
   userDropdownVisible.value = false // 点击后收起用户下拉菜单
 }
 
-const toggleDropdown = () => {
+const toggleDropdown = (event) => {
+  event.stopPropagation() // 阻止事件冒泡
   dropdownVisible.value = !dropdownVisible.value
 }
 
-const toggleUserDropdown = () => {
+const toggleUserDropdown = (event) => {
+  event.stopPropagation() // 阻止事件冒泡
   userDropdownVisible.value = !userDropdownVisible.value
 }
 </script>
 
-<style scoped>
+<!-- <style scoped>
 /* 修改 navbar 样式 */
 .navbar {
   display: flex;
@@ -193,20 +220,6 @@ const toggleUserDropdown = () => {
   background-color: #acaba8; /* 鼠标悬停时的背景色 */
 }
 
-/* 确保右侧的按钮不会占满整行 */
-.navbar-right {
-  display: flex;
-  justify-content: flex-end; /* 保持右对齐 */
-  align-items: center; /* 垂直居中 */
-}
-
-.navbar-right .nav-btn {
-  min-width: auto; /* 让按钮宽度自适应 */
-  width: auto; /* 让按钮宽度根据内容自适应 */
-  padding: 10px 20px; /* 控制按钮大小 */
-  display: inline-block; /* 防止被拉伸 */
-}
-
 /* 确保用户名和登出按钮不影响其他布局 */
 .nickname,
 .nav-btn {
@@ -216,5 +229,88 @@ const toggleUserDropdown = () => {
 .dropdown-item {
   min-width: auto; /* 去掉100%的宽度约束 */
   width: auto; /* 自动适应内容宽度 */
+}
+</style> -->
+
+<style scoped>
+/* 修改 navbar 样式 */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  height: 70px;
+  background-color: #333;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.navbar-left {
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.nav-btn {
+  /* margin: 0 15px; */
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: #515151;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-btn:hover {
+  background-color: #acaba8;
+  color: white;
+}
+
+.arrow {
+  margin-left: 5px;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0; /* 确保下拉菜单与按钮左对齐 */
+  width: 100%; /* 让下拉菜单宽度与按钮宽度相同 */
+  background-color: #515151;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px;
+}
+
+.dropdown-item {
+  padding: 10px 0px;
+  cursor: pointer;
+  color: white;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+  display: block;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: #acaba8;
 }
 </style>

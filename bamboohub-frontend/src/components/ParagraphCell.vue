@@ -103,7 +103,10 @@ const canEdit = ref(false)
 // 初始化加载数据
 onMounted(async () => {
   try {
-    const token = localStorage.getItem('token')
+    let token = ''
+    if (localStorage.getItem('token')) {
+      token = localStorage.getItem('token')
+    }
     loading.value = true
     let response = await axios.get(`${BACKEND_URL}/paragraph/${props.paraId}`, {
       headers: {
@@ -333,7 +336,7 @@ form label {
 
   /* 以下是居中设置 */
   width: 800px; /* 设置宽度，可根据需要调整 */
-  max-width: 90%; /* 最大宽度，避免过宽 */
+  max-width: 100%; /* 最大宽度，避免过宽 */
   margin: 20px auto; /* 水平居中，20px 的上下外边距 */
 }
 

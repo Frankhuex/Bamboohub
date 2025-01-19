@@ -154,6 +154,22 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.3.0</version> <!-- 使用最新的稳定版本 -->
+				<executions>
+					<execution>
+						<goals>
+							<goal>javadoc</goal> <!-- 生成 Javadoc -->
+						</goals>
+						<configuration>
+							<source>17</source> <!-- 配置源代码版本，与你的项目一致 -->
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 

@@ -20,7 +20,8 @@
 
     <div class="buttons">
       <br />
-      <button @click="goRegister">新用户注册</button>
+      <button @click="goRegister">新人注册</button>
+      <button @click="goTourist">游客访问</button>
     </div>
   </div>
 </template>
@@ -53,13 +54,15 @@ const submitLogin = async () => {
       username: username.value,
       password: password.value,
     })
-    userDTO.value = response.data.data
-    console.log(userDTO.value)
-    localStorage.setItem('token', userDTO.value.token)
-
-    console.log(localStorage.getItem('token'))
-
-    router.push('/')
+    if (response.data.success === true) {
+      userDTO.value = response.data.data
+      console.log(userDTO.value)
+      localStorage.setItem('token', userDTO.value.token)
+      console.log(localStorage.getItem('token'))
+      router.push('/')
+    } else {
+      alert('登录失败！')
+    }
   } catch (e) {
     console.log(e)
   }
@@ -69,6 +72,11 @@ const goRegister = () => {
   console.log('go register')
   router.push({ name: 'Register' })
 }
+
+const goTourist = () => {
+  localStorage.removeItem('token')
+  router.push('/')
+}
 </script>
 
 <style scoped>
@@ -76,13 +84,12 @@ const goRegister = () => {
 .login-container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  height: 100vh; /* 使其垂直居中 */
+  margin: 0;
 }
 
 .login {
-  width: 400px; /* 设置表单的固定宽度 */
+  width: 300px; /* 设置表单的固定宽度 */
   padding: 20px;
   background-color: #ccaf70;
   border: 1px solid #000;
@@ -126,6 +133,8 @@ button {
   color: white;
   cursor: pointer;
   font-size: 16px;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 button:hover {
