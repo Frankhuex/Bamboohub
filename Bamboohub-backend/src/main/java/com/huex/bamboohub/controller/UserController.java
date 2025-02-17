@@ -60,4 +60,13 @@ public class UserController {
         }
     }
 
+    @PostMapping("/changepwd")
+    public Response<UserDTO> changePwd(@RequestHeader("Authorization") String token, @RequestBody ChangePwdRequest changePwdReq) {
+        try {
+            return Response.newSuccess(userService.changePwd(token, changePwdReq));
+        } catch (Exception e) {
+            return newFail(e.getMessage());
+        }
+    }
+
 }

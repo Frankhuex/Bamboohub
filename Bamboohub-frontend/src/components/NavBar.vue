@@ -29,6 +29,7 @@
       <!-- 用户下拉菜单 -->
       <div v-if="userDropdownVisible" class="dropdown">
         <span class="dropdown-item" @click="logout">登出</span>
+        <span class="dropdown-item" @click="changepwd">修改密码</span>
       </div>
     </div>
   </div>
@@ -124,6 +125,13 @@ const logout = () => {
   localStorage.removeItem('token')
   router.push({
     name: 'Login',
+  })
+  userDropdownVisible.value = false // 点击后收起用户下拉菜单
+}
+
+const changepwd = () => {
+  router.push({
+    name: 'ChangePwd',
   })
   userDropdownVisible.value = false // 点击后收起用户下拉菜单
 }

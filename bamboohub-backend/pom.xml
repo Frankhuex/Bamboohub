@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.huex</groupId>
 	<artifactId>Bamboohub-backend</artifactId>
-	<version>0.0.2</version>
+	<version>0.1</version>
 	<name>bamboohub</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>

@@ -281,15 +281,15 @@ public class ParagraphServiceImpl implements ParagraphService {
     }
 
     private List<Long> getParaIdsByBookDAO(Book book) throws IllegalArgumentException {
+        System.out.println("getParaIdsByBookDAO"+book.getId());
         LinkedList<Long> paraIds=new LinkedList<>();
         paraIds.add(book.getStartPara().getId());
-        do {
+        while (true) {
             Paragraph paragraph = paraRepo.findById(paraIds.getLast())
                 .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+paraIds.getLast()+" not found."));
-            if (paragraph.getNextParaId()!=null) {
-                paraIds.add(paragraph.getNextParaId());
-            }
-        } while (paraIds.getLast()!=null);
+            if (paragraph.getNextParaId()==null) break;
+            paraIds.add(paragraph.getNextParaId());
+        }
         return paraIds;
     }
 }

@@ -38,8 +38,8 @@
   <div class="books">
     <BookCell
       v-for="bookId in bookIds"
-      :key="bookId"
-      :bookId="bookId"
+      :key="Number(bookId)"
+      :bookId="Number(bookId)"
       @deletedBook="handleDeleteBook"
     />
   </div>
@@ -82,6 +82,7 @@ onMounted(async () => {
     console.log(urlSuffix, 'response.data:', response.data)
 
     bookIds.value = response.data.data
+    console.log('bookIds:', bookIds.value)
     loading.value = true
   } catch (e) {
     console.log(e)

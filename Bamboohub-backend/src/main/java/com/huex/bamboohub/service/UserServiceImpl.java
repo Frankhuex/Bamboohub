@@ -51,4 +51,16 @@ public class UserServiceImpl implements UserService {
         UserSimpleDTO userSimpleDTO = userConverter.toSimpleDTO(user);
         return userSimpleDTO;
     }
+
+    @Override
+    public UserDTO changePwd(String token, ChangePwdRequest changePwdReq) {
+        User user=jwtUtil.parseUser(token);
+        if (!passwordUtil.matches(changePwdReq.getOldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Old password is incorrect.");
+        }
+        user.setPassword(passwordUtil.encryptPassword(changePwdReq.getNewPassword()));
+        userRepo.save(user);
+        String newToken = jwtUtil.generateToken(user.getId(), user.getUsername());
+        return userConverter.toDTO(user,newToken);
+    }
 }

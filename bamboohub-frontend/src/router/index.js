@@ -5,6 +5,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 
 import RegisterView from '../views/RegisterView.vue'
 import LoginView from '../views/LoginView.vue'
+import ChangePwdView from '../views/ChangePwdView.vue'
 import BookListView from '../views/BookListView.vue'
 import BookView from '../views/BookView.vue'
 
@@ -18,6 +19,11 @@ const routes = [
     path: '/login',
     component: LoginView,
     name: 'Login',
+  },
+  {
+    path: '/changepwd',
+    component: ChangePwdView,
+    name: 'ChangePwd',
   },
   {
     path: '/',

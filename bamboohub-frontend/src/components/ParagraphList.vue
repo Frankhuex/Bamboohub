@@ -16,7 +16,6 @@
       v-for="id in paraIds"
       :key="id"
       :paraId="id"
-      @loadedNextParaId="handleNextParaId"
       @addedParagraph="handleAddParagraph"
       @deletedParagraph="handleDeleteParagraph"
       @movedUpParagraph="handleMoveUpParagraph"
@@ -65,17 +64,23 @@ onMounted(async () => {
       },
     }) // 获取书籍信息
     console.log('Book Info', response.data)
-    if (response.data.success) {
+    if (response.data.success === true) {
       bookDTO.value = response.data.data
-      //console.log(bookDTO.value)
-      paraIds.value.push(bookDTO.value.startParaId) // 将书籍的起始段落 ID 添加到列表
-      // //response = await axios.get(`${BACKEND_URL}/book/5/paraIds`) // 获取书籍的段落 ID 列表
-      // console.log(response)
+      console.log('start fetching paraIds')
+      console.log(bookDTO.value.startParaId)
+      console.log(`${BACKEND_URL}/book/${bookDTO.value.id}/paraIds`)
+      // paraIds.value.push(bookDTO.value.startParaId) // 将书籍的起始段落 ID 添加到列表
+      response = await axios.get(`${BACKEND_URL}/book/${bookDTO.value.id}/paraIds`, {
+        headers: {
+          Authorization: token,
+        },
+      }) // 获取书籍的段落 ID 列表
+      console.log(response)
       // console.log(111)
-      // if (response.data.success) {
-      //   paraIds.value = response.data.data
-      //   loading.value = false
-      // }
+      if (response.data.success === true) {
+        paraIds.value = response.data.data
+        loading.value = false
+      }
     }
   } catch (e) {
     console.log(e)
@@ -83,13 +88,11 @@ onMounted(async () => {
 })
 
 // 处理子组件返回的 nextParaId
-function handleNextParaId(nextParaId) {
-  if (nextParaId && !paraIds.value.includes(nextParaId)) {
-    //console.log('nextParaId:', nextParaId)
-    paraIds.value.push(nextParaId) // 将新段落 ID 添加到列表
-  }
-  //console.log(nextParaId.value)
-}
+// function handleNextParaId(nextParaId) {
+//   if (nextParaId && !paraIds.value.includes(nextParaId)) {
+//     // paraIds.value.push(nextParaId) // 将新段落 ID 添加到列表
+//   }
+// }
 
 function handleAddParagraph(data) {
   let index = paraIds.value.indexOf(data.prevParaId)

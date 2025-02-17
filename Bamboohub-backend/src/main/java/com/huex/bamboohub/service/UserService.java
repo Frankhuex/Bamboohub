@@ -6,4 +6,5 @@ public interface UserService {
     UserDTO register(RegisterRequest regReq);
     UserDTO login(LoginRequest loginReq);
     UserSimpleDTO getUserInfoByUsername(String username);
+    UserDTO changePwd(String token, ChangePwdRequest changePwdReq);
 }
