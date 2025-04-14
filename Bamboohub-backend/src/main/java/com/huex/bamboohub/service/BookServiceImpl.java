@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -13,6 +14,7 @@ import com.huex.bamboohub.converter.*;
 import com.huex.bamboohub.util.*;
 
 @Service
+@CacheConfig(cacheNames = "books")
 public class BookServiceImpl implements BookService {
     @Autowired
     private BookRepo bookRepo;
@@ -33,6 +35,7 @@ public class BookServiceImpl implements BookService {
     private RoleUtil roleUtil;
 
     @Override
+    @CacheEvict(value = "books", allEntries = true)
     public Long addNewBook(String token, BookRequest bookReq) throws IllegalArgumentException {
         List<Book> books = bookRepo.findByTitle(bookReq.getTitle());
         if (!CollectionUtils.isEmpty(books)) {
@@ -52,17 +55,19 @@ public class BookServiceImpl implements BookService {
 
         User owner=jwtUtil.parseUser(token);
         roleUtil.putRole(owner, savedBook, Role.RoleType.OWNER);
-
+        Long savedId=savedBook.getId();
         return savedBook.getId();
     }
 
     @Override
+    @Cacheable(value="books", key="'book:'+#id")
     public BookDTO getBookById(String token, Long id) throws IllegalArgumentException {
         Book book = bookRepo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Book with id "+id+" not found."));
         if (!book.getIsPublic() && !roleUtil.canView(token,id)) { 
             throw new IllegalArgumentException("No permission to access book.");
         }
+        System.out.println(book);
         return bookConverter.toDTO(book);
     }
 
@@ -107,6 +112,7 @@ public class BookServiceImpl implements BookService {
     }
     
     @Override
+    @CacheEvict(value = "books", key="'book:'+#id")
     public void deleteBookById(String token, Long id) throws IllegalArgumentException {
         Book book=bookRepo.findById(id)
             .orElseThrow(()-> new IllegalArgumentException("No permission to delete book."));
@@ -123,6 +129,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    @CachePut(value = "books", key="'book:'+#id")
     public BookDTO updateBookById(String token, Long id, BookUpdateRequest bookUpdReq) throws IllegalArgumentException {
         Book book = bookRepo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Book with id "+id+" not found."));

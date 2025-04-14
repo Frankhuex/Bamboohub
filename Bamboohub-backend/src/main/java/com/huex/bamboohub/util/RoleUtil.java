@@ -1,9 +1,16 @@
 package com.huex.bamboohub.util;
+import com.huex.bamboohub.converter.UserConverter;
 import com.huex.bamboohub.dao.*;
 
+import com.huex.bamboohub.dto.RolesDTO;
+import com.huex.bamboohub.dto.UserSimpleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import com.huex.bamboohub.dao.Role.RoleType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class RoleUtil {
@@ -18,6 +25,37 @@ public class RoleUtil {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private UserConverter userConverter;
+
+    @Cacheable(value="rolesOfBook",key="'bookId:'+#book.getId()")
+    public RolesDTO getRolesByBookIdWithoutToken(Book book) throws IllegalArgumentException {
+        List<Role> roles=roleRepo.findByBook(book);
+        UserSimpleDTO owner=new UserSimpleDTO();
+        List<UserSimpleDTO> admins=new ArrayList<>();
+        List<UserSimpleDTO> editors=new ArrayList<>();
+        List<UserSimpleDTO> viewers=new ArrayList<>();
+        for (Role role : roles) {
+            RoleType roleType=role.getRoleType();
+            if (roleType==RoleType.OWNER) {
+                owner=userConverter.toSimpleDTO(role.getUser());
+            } else if (roleType==RoleType.ADMIN) {
+                admins.add(userConverter.toSimpleDTO(role.getUser()));
+            } else if (roleType==RoleType.EDITOR) {
+                editors.add(userConverter.toSimpleDTO(role.getUser()));
+            } else if (roleType==RoleType.VIEWER) {
+                viewers.add(userConverter.toSimpleDTO(role.getUser()));
+            }
+        }
+        RolesDTO rolesDTO=new RolesDTO();
+        rolesDTO.setOwner(owner);
+        rolesDTO.setAdmins(admins);
+        rolesDTO.setEditors(editors);
+        rolesDTO.setViewers(viewers);
+
+        return rolesDTO;
+    }
 
     public Role putRole(User user, Book book, RoleType roleType) {
         // 查找现有的角色并更新，找不到则创建新角色
@@ -156,5 +194,6 @@ public class RoleUtil {
     public Boolean isEditorOrViewer(String token, Long bookId) {
         return isEditorOrViewer(jwtUtil.parseUserId(token), bookId);
     }
+
 
 }

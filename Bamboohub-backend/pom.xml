@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.huex</groupId>
 	<artifactId>Bamboohub-backend</artifactId>
-	<version>0.1</version>
+	<version>0.1.2</version>
 	<name>bamboohub</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
@@ -36,6 +36,11 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
 		<!-- spring-boot-starter-data-jpa -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -49,6 +54,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
+
 
 		<!-- spring-boot-starter-actuator -->
 		<dependency>
@@ -107,6 +113,8 @@
 			<artifactId>jaxb-api</artifactId>
 			<version>2.3.0</version>
 		</dependency>
+
+
 
 		<!-- <dependency>
 			<groupId>com.sun.xml.bind</groupId>

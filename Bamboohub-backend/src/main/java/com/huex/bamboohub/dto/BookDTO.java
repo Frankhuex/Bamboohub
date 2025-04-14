@@ -1,5 +1,7 @@
 package com.huex.bamboohub.dto;
 
+import java.io.Serializable;
+
 public class BookDTO {
     private Long id; //must be null for new books
     private String title;
