@@ -5,10 +5,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.cache.Cache;
@@ -35,7 +33,7 @@ public class ParagraphServiceImpl implements ParagraphService {
     public List<ParagraphDTO> getParagraphsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
-        if (!book.getIsPublic() && !roleUtil.canView(token,bookId)) {
+        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,bookId)) {
             throw new IllegalArgumentException("No permission to get paragraphs.");
         }
         return getParagraphsByBookDAO(book);
@@ -50,7 +48,7 @@ public class ParagraphServiceImpl implements ParagraphService {
             throw new IllegalArgumentException("More than one book with title " + bookTitle + " found.");
         }
         Book book=books.get(0);
-        if (!book.getIsPublic() && !roleUtil.canView(token,book.getId())) {
+        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,book.getId())) {
             throw new IllegalArgumentException("No permission to get paragraphs.");
         }
         return getParagraphsByBookDAO(book);
@@ -61,7 +59,7 @@ public class ParagraphServiceImpl implements ParagraphService {
     public List<Long> getParaIdsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
-        if (!book.getIsPublic() && !roleUtil.canView(token,bookId)) {
+        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,bookId)) {
             throw new IllegalArgumentException("No permission to get paragraph ids.");
         }
         return getParaIdsByBookDAO(book);
@@ -70,7 +68,7 @@ public class ParagraphServiceImpl implements ParagraphService {
 
 
     @Override
-    public Long addNewParagraph(String token,ParagraphRequest paraReq) throws IllegalArgumentException {
+    public Long addNewParagraph(String token, ParagraphReq paraReq) throws IllegalArgumentException {
         Long prevParaId=paraReq.getPrevParaId();
         Paragraph prevPara=paraRepo.findById(prevParaId)
             .orElseThrow(()->new IllegalArgumentException("Previous paragraph with id "+paraReq.getPrevParaId()+" not found."));
@@ -140,7 +138,7 @@ public class ParagraphServiceImpl implements ParagraphService {
     public ParagraphDTO getParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
-        if (!paragraph.getBook().getIsPublic() && !roleUtil.canView(token,paragraph.getBook().getId())) {
+        if (paragraph.getBook().getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,paragraph.getBook().getId())) {
             throw new IllegalArgumentException("No permission to get paragraph.");
         }
         Long bookId=paragraph.getBook().getId();
@@ -150,10 +148,11 @@ public class ParagraphServiceImpl implements ParagraphService {
     @Override
     @Transactional
     @CachePut(value = "paragraphs", key = "'para:' + #id", unless = "#result == null")
-    public ParagraphDTO updateParagraphById(String token, Long id,ParagraphUpdateRequest paraUpdReq) throws IllegalArgumentException {
+    public ParagraphDTO updateParagraphById(String token, Long id, ParagraphUpdateReq paraUpdReq) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
-        if (!roleUtil.canEdit(token,paragraph.getBook().getId())) {
+        Book book=paragraph.getBook();
+        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,paragraph.getBook().getId())) {
             throw new IllegalArgumentException("No permission to update paragraph.");
         }
         String author=paraUpdReq.getAuthor();
@@ -176,7 +175,7 @@ public class ParagraphServiceImpl implements ParagraphService {
         Book book=paragraph.getBook();
         Long bookId=book.getId();
 
-        if (!roleUtil.canEdit(token,book.getId())) {
+        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book.getId())) {
             throw new IllegalArgumentException("No permission to move paragraph up.");
         }
 
@@ -230,7 +229,7 @@ public class ParagraphServiceImpl implements ParagraphService {
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
         Book book=paragraph.getBook();
         Long bookId=book.getId();
-        if (!roleUtil.canEdit(token,book.getId())) {
+        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book.getId())) {
             throw new IllegalArgumentException("No permission to move paragraph down.");
         }
 

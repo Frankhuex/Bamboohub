@@ -41,7 +41,7 @@ public class ParagraphController {
     }
 
     @PostMapping("/paragraph")
-    public Response<Long> addNewParagraph(@RequestHeader("Authorization") String token, @RequestBody ParagraphRequest paraReq) {
+    public Response<Long> addNewParagraph(@RequestHeader("Authorization") String token, @RequestBody ParagraphReq paraReq) {
         try { 
             return Response.newSuccess(paragraphService.addNewParagraph(token, paraReq));
         } catch (Exception e) { 
@@ -69,7 +69,7 @@ public class ParagraphController {
     }
 
     @PutMapping("/paragraph/{id}")
-    public Response<ParagraphDTO> updateParagraphById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id, @RequestBody ParagraphUpdateRequest paraUpdReq)
+    public Response<ParagraphDTO> updateParagraphById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id, @RequestBody ParagraphUpdateReq paraUpdReq)
     {
         try {
             return Response.newSuccess(paragraphService.updateParagraphById(token,id,paraUpdReq));

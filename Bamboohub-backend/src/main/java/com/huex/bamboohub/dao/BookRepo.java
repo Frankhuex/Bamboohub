@@ -7,8 +7,6 @@ import java.util.List;
 @Repository
 public interface BookRepo extends JpaRepository<Book, Long> {
     List<Book> findByTitle(String title);
-
-    List<Book> findByStartParaId(Long startParaId);
-
-    List<Book> findByIsPublic(Boolean isPublic);
+    List<Book> findByScope(Book.Scope scope);
+    List<Book> findByScopeIn(List<Book.Scope> scopes);
 }

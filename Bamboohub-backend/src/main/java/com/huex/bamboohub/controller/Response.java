@@ -2,7 +2,7 @@ package com.huex.bamboohub.controller;
 
 public class Response<T> {
     private T data;
-    private Boolean success;
+    private boolean success;
     private String errorMsg;
 
     public static <K> Response<K> newSuccess(K data) {
@@ -25,10 +25,10 @@ public class Response<T> {
     public void setData(T data) {
         this.data = data;
     }
-    public Boolean isSuccess() {
+    public boolean isSuccess() {
         return success;
     }
-    public void setSuccess(Boolean success) {
+    public void setSuccess(boolean success) {
         this.success = success;
     }
     public String getErrorMsg() {

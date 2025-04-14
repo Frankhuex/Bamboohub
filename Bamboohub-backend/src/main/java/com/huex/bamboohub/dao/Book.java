@@ -2,11 +2,16 @@ package com.huex.bamboohub.dao;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-
+import lombok.Getter;
+import lombok.Setter;
 import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedDate;
+
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+@Getter @Setter
 @Entity
 @Table(name="book")
 public class Book {
@@ -15,6 +20,10 @@ public class Book {
     @GeneratedValue(strategy=IDENTITY)
     private Long id;
 
+    @Column(name="create_time")
+    @CreatedDate
+    private Date createTime;
+
     @Column(name="title")
     private String title;
 
@@ -22,9 +31,13 @@ public class Book {
     @JoinColumn(name="start_para_id",nullable=true)
     private Paragraph startPara; //Blank paragraph created on book creation
 
-    @Column(name="is_public")
-    private Boolean isPublic;
+//    @Column(name="is_public")
+//    private boolean isPublic;
 
+    public enum Scope {ALLEDIT,ALLREAD,PRIVATE}
+    @Enumerated(EnumType.STRING)
+    @Column(name="scope")
+    private Scope scope;
 
     //以下两个是必要的
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL,orphanRemoval=true)
@@ -33,56 +46,10 @@ public class Book {
     @OneToMany(mappedBy="book",cascade=CascadeType.ALL,orphanRemoval=true)
     private List<Paragraph> paragraphs=new ArrayList<>();
 
-
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
+    public Book() {}
+    public Book(String title, Scope scope) {
         this.title = title;
+        this.scope = scope;
     }
-
-    public Paragraph getStartPara() {
-        return startPara;
-    }
-
-    public void setStartPara(Paragraph startPara) {
-        this.startPara = startPara;
-    }
-
-    public Boolean getIsPublic() {
-        return isPublic;
-    }
-
-    public void setIsPublic(Boolean isPublic) {
-        this.isPublic = isPublic;
-    }
-
-    public List<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<Role> roles) {
-        this.roles = roles;
-    }
-
-    public List<Paragraph> getParagraphs() {
-        return paragraphs;
-    }
-
-    public void setParagraphs(List<Paragraph> paragraphs) {
-        this.paragraphs = paragraphs;
-    }
-
 
 }

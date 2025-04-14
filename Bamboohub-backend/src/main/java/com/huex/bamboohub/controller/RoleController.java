@@ -5,8 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 import com.huex.bamboohub.converter.UserConverter;
-import com.huex.bamboohub.request.RoleDeleteRequest;
-import com.huex.bamboohub.request.RoleRequest;
+import com.huex.bamboohub.request.RoleReq;
 import com.huex.bamboohub.service.*;
 import com.huex.bamboohub.util.JwtUtil;
 import com.huex.bamboohub.dto.RolesDTO;
@@ -19,7 +18,7 @@ public class RoleController {
     @Autowired private UserConverter userConverter;
 
     @PutMapping("/role")
-    public Response<String> putRole(@RequestHeader("Authorization") String token, @RequestBody RoleRequest roleReq) {
+    public Response<String> putRole(@RequestHeader("Authorization") String token, @RequestBody RoleReq roleReq) {
         try {
             roleService.putRole(token, roleReq);
             return Response.newSuccess("Role updated successfully");

@@ -1,10 +1,12 @@
-package com.huex.bamboohub.dto;
+package com.huex.bamboohub.request;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+
 @Getter @Setter @AllArgsConstructor
-public class UserSimpleDTO {
-    private Long id;
+public class LoginReq {
     private String username;
-    private String nickname;
+    private String password;
+
+
 }

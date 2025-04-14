@@ -1,34 +1,17 @@
 package com.huex.bamboohub.dto;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.util.Date;
+
+@Getter @Setter @AllArgsConstructor
 public class UserDTO {
     private Long id;
+    private Date createTime;
     private String username;
     private String nickname;
     private String token;
 
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public String getUsername() {
-        return username;
-    }
-    public void setUsername(String username) {
-        this.username = username;   
-    }
-    public String getToken() {
-        return token;
-    }
-    public void setToken(String token) {
-        this.token = token;
-    }
-    public String getNickname() {
-        return nickname;
-    }
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
 }
 
