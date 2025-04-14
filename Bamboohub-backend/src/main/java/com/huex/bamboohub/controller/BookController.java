@@ -16,7 +16,7 @@ public class BookController {
     private BookService bookService;
 
     @PostMapping("/book")
-    public Response<Long> addNewBook(@RequestHeader("Authorization") String token, @RequestBody BookRequest bookReq) {
+    public Response<Long> addNewBook(@RequestHeader("Authorization") String token, @RequestBody BookReq bookReq) {
         try { 
             return Response.newSuccess(bookService.addNewBook(token,bookReq));
         } catch (Exception e) {
@@ -80,7 +80,7 @@ public class BookController {
     }
 
     @PutMapping("/book/{id}")
-    public Response<BookDTO> updateBookById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id, @RequestBody BookUpdateRequest bookUpdReq) {
+    public Response<BookDTO> updateBookById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id, @RequestBody BookUpdateReq bookUpdReq) {
         try { 
             return Response.newSuccess(bookService.updateBookById(token,id,bookUpdReq));
         } catch (Exception e) { 

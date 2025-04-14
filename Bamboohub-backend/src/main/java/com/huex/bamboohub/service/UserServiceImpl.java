@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 
 import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.dao.*;
-import com.huex.bamboohub.dao.Role.RoleType;
 import com.huex.bamboohub.request.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public UserDTO register(RegisterRequest regReq) throws IllegalArgumentException {
+    public UserDTO register(RegisterReq regReq) throws IllegalArgumentException {
         if (userRepo.existsByUsername(regReq.getUsername())) {
             throw new IllegalArgumentException("Username already exists.");
         }
@@ -34,7 +33,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO login(LoginRequest loginReq) {
+    public UserDTO login(LoginReq loginReq) {
         User user = userRepo.findByUsername(loginReq.getUsername())
             .orElseThrow(() -> new IllegalArgumentException("Username or password is incorrect."));
         if (!passwordUtil.matches(loginReq.getPassword(), user.getPassword())) {
@@ -53,7 +52,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO changePwd(String token, ChangePwdRequest changePwdReq) {
+    public UserDTO changePwd(String token, ChangePwdReq changePwdReq) {
         User user=jwtUtil.parseUser(token);
         if (!passwordUtil.matches(changePwdReq.getOldPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Old password is incorrect.");

@@ -21,31 +21,16 @@ public class ParagraphConverter {
 
 
     public ParagraphDTO toDTO(Paragraph paragraph) {
-        ParagraphDTO paraDTO = new ParagraphDTO();
-        paraDTO.setId(paragraph.getId());
-        paraDTO.setBookId(paragraph.getBook().getId());
-        paraDTO.setAuthor(paragraph.getAuthor());
-        paraDTO.setContent(paragraph.getContent());
-        paraDTO.setPrevParaId(paragraph.getPrevParaId());
-        paraDTO.setNextParaId(paragraph.getNextParaId());
-        return paraDTO;
+        return new ParagraphDTO(
+                paragraph.getId(),
+                paragraph.getCreateTime(),
+                paragraph.getBook().getId(),
+                paragraph.getAuthor(),
+                paragraph.getContent(),
+                paragraph.getPrevParaId(),
+                paragraph.getNextParaId()
+        );
     }
-
-
-    public Paragraph toDAO(ParagraphRequest paraReq) throws IllegalArgumentException {
-        Paragraph prevPara=paraRepo.findById(paraReq.getPrevParaId())
-            .orElseThrow(() -> new IllegalArgumentException("Previous paragraph not found"));
-        Book book=prevPara.getBook();
-
-        Paragraph paragraph = new Paragraph();
-        paragraph.setBook(book);
-        paragraph.setAuthor(paraReq.getAuthor());
-        paragraph.setContent(paraReq.getContent());
-        paragraph.setPrevParaId(paraReq.getPrevParaId());
-        paragraph.setNextParaId(prevPara.getNextParaId());
-        return paragraph;
-    }
-
 
     public List<ParagraphDTO> toDTOs(List<Paragraph> paragraphs) {
         List<ParagraphDTO> paraDTOs = new ArrayList<>();
@@ -54,4 +39,30 @@ public class ParagraphConverter {
         }
         return paraDTOs;
     }
+
+
+    public Paragraph toDAO(ParagraphReq paraReq) throws IllegalArgumentException {
+        Paragraph prevPara=paraRepo.findById(paraReq.getPrevParaId())
+            .orElseThrow(() -> new IllegalArgumentException("Previous paragraph not found"));
+        Book book=prevPara.getBook();
+
+//        Paragraph para=new Paragraph();
+//        para.setBook(book);
+//        para.setAuthor(paraReq.getAuthor());
+//        para.setContent(paraReq.getContent());
+//        para.setPrevParaId(paraReq.getPrevParaId());
+//        para.setNextParaId(prevPara.getNextParaId());
+//        return para;
+
+        return new Paragraph(
+                book,
+                paraReq.getAuthor(),
+                paraReq.getContent(),
+                paraReq.getPrevParaId(),
+                prevPara.getNextParaId()
+        );
+    }
+
+
+
 }

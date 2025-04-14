@@ -5,8 +5,13 @@ import jakarta.persistence.*;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
 
+@Getter @Setter
 @Entity
 @Table(name="user")
 public class User {
@@ -14,6 +19,10 @@ public class User {
     @Column(name="id")
     @GeneratedValue(strategy=IDENTITY)
     private Long id;
+
+    @Column(name="create_time")
+    @CreatedDate
+    private Date createTime;
 
     @Column(name="username",nullable=false,unique=true)
     private String username;
@@ -27,37 +36,12 @@ public class User {
     @OneToMany(mappedBy="user",cascade=CascadeType.ALL,orphanRemoval=true)
     private List<Role> roles=new ArrayList<>();
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
+    public User() {}
+    public User(String username, String password, String nickname) {
         this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getNickname() {
-        return nickname;
-    }
-
-    public void setNickname(String nickname) {
         this.nickname = nickname;
     }
-    
+
 
 }

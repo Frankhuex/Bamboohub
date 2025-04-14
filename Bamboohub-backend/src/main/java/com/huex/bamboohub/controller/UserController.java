@@ -9,8 +9,6 @@ import com.huex.bamboohub.util.*;
 
 import static com.huex.bamboohub.controller.Response.newFail;
 
-import java.util.List;
-
 import com.huex.bamboohub.converter.UserConverter;
 
 @RestController
@@ -25,7 +23,7 @@ public class UserController {
     private UserConverter userConverter;
 
     @PostMapping("/register")
-    public Response<UserDTO> register(@RequestBody RegisterRequest regReq) {
+    public Response<UserDTO> register(@RequestBody RegisterReq regReq) {
         try {
             return Response.newSuccess(userService.register(regReq));
         } catch (Exception e) {
@@ -34,7 +32,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Response<UserDTO> login(@RequestBody LoginRequest loginReq) {
+    public Response<UserDTO> login(@RequestBody LoginReq loginReq) {
         try {
             return Response.newSuccess(userService.login(loginReq));
         } catch (Exception e) {
@@ -61,7 +59,7 @@ public class UserController {
     }
 
     @PostMapping("/changepwd")
-    public Response<UserDTO> changePwd(@RequestHeader("Authorization") String token, @RequestBody ChangePwdRequest changePwdReq) {
+    public Response<UserDTO> changePwd(@RequestHeader("Authorization") String token, @RequestBody ChangePwdReq changePwdReq) {
         try {
             return Response.newSuccess(userService.changePwd(token, changePwdReq));
         } catch (Exception e) {

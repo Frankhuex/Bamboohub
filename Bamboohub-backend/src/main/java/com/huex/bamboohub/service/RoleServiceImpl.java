@@ -7,9 +7,8 @@ import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.request.*;
 import com.huex.bamboohub.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.ArrayList;
 
 @Service
 public class RoleServiceImpl implements RoleService {
@@ -23,7 +22,8 @@ public class RoleServiceImpl implements RoleService {
     @Autowired private RoleConverter roleConverter;
 
     @Override
-    public void putRole(String token, RoleRequest roleReq) throws IllegalArgumentException {
+    @CacheEvict(value="rolesOfBook", key="'bookId:'+#roleReq.getBookId()")
+    public void putRole(String token, RoleReq roleReq) throws IllegalArgumentException {
         User employee=userRepo.findByUsername(roleReq.getUsername())
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Long employeeId=employee.getId();
@@ -82,6 +82,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @CacheEvict(value="rolesOfBook", key="'bookId:'+#bookId")
     public void deleteRoleByBookIdAndUsername(String token, Long bookId, String username) throws IllegalArgumentException {
         User employee=userRepo.findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -109,7 +110,7 @@ public class RoleServiceImpl implements RoleService {
             ||
             employerRoleType==RoleType.OWNER //2.owner可删除非owner
             || 
-            (employerRoleType==RoleType.ADMIN && existingRoleType!=RoleType.ADMIN) //3.admin可删除非admin
+            (employerRoleType==RoleType.ADMIN) //3.admin可删除非admin
         ) {
             roleRepo.deleteById(existingRole.getId());
         } else {
@@ -122,33 +123,10 @@ public class RoleServiceImpl implements RoleService {
     public RolesDTO getRolesByBookId(String token, Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(() -> new IllegalArgumentException("Book not found"));
-        if (!book.getIsPublic() && !roleUtil.hasAnyRole(token,bookId)) {
-                throw new IllegalArgumentException("No permission to view roles");
-            }
-        List<Role> roles=roleRepo.findByBook(book);
-        UserSimpleDTO owner=new UserSimpleDTO();
-        List<UserSimpleDTO> admins=new ArrayList<>();
-        List<UserSimpleDTO> editors=new ArrayList<>();
-        List<UserSimpleDTO> viewers=new ArrayList<>();
-        for (Role role : roles) {
-            RoleType roleType=role.getRoleType();
-            if (roleType==RoleType.OWNER) {      
-                owner=userConverter.toSimpleDTO(role.getUser());
-            } else if (roleType==RoleType.ADMIN) {
-                admins.add(userConverter.toSimpleDTO(role.getUser()));
-            } else if (roleType==RoleType.EDITOR) {
-                editors.add(userConverter.toSimpleDTO(role.getUser()));
-            } else if (roleType==RoleType.VIEWER) {
-                viewers.add(userConverter.toSimpleDTO(role.getUser()));
-            }
+        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.hasAnyRole(token,bookId)) {
+            throw new IllegalArgumentException("No permission to view roles");
         }
-        RolesDTO rolesDTO=new RolesDTO();
-        rolesDTO.setOwner(owner);
-        rolesDTO.setAdmins(admins);
-        rolesDTO.setEditors(editors);
-        rolesDTO.setViewers(viewers);
-
-        return rolesDTO;
+        return roleUtil.getRolesByBookIdWithoutToken(book);
     }
 
     @Override
@@ -158,4 +136,6 @@ public class RoleServiceImpl implements RoleService {
         }
         return roleUtil.getRoleType(token,bookId);
     }
+
+
 }

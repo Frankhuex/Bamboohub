@@ -11,20 +11,24 @@ import com.huex.bamboohub.request.*;
 public class BookConverter {
 
     public BookDTO toDTO(Book book) {
-        BookDTO bookDTO = new BookDTO();
-        bookDTO.setId(book.getId());
-        bookDTO.setTitle(book.getTitle());
-        if (book.getStartPara()!=null) {
-            bookDTO.setStartParaId(book.getStartPara().getId());
-        }
-        bookDTO.setIsPublic(book.getIsPublic());
-        return bookDTO;
+        return new BookDTO(
+                book.getId(),
+                book.getCreateTime(),
+                book.getTitle(),
+                book.getStartPara().getId(),
+                book.getScope()
+        );
     }
 
-    public Book toDAO(BookRequest bookReq) {
-        Book book = new Book();
-        book.setTitle(bookReq.getTitle());
-        book.setIsPublic(bookReq.getIsPublic());
-        return book;
+    public Book toDAO(BookReq bookReq) {
+//        Book book = new Book();
+//        book.setTitle(bookReq.getTitle());
+//        book.setScope(bookReq.getScope());
+//        return book;
+
+        return new Book(
+                bookReq.getTitle(),
+                bookReq.getScope()
+        );
     }
 }

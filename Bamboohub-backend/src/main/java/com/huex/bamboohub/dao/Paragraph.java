@@ -2,7 +2,13 @@ package com.huex.bamboohub.dao;
 
 import jakarta.persistence.*;
 import static jakarta.persistence.GenerationType.IDENTITY;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
 
+import java.util.Date;
+
+@Getter @Setter
 @Entity
 @Table(name="paragraph")
 public class Paragraph {
@@ -10,6 +16,10 @@ public class Paragraph {
     @Column(name="id")
     @GeneratedValue(strategy=IDENTITY)
     private Long id;
+
+    @Column(name="create_time")
+    @CreatedDate
+    private Date createTime;
 
     @ManyToOne
     @JoinColumn(name="book_id",nullable=false)
@@ -27,53 +37,13 @@ public class Paragraph {
     @Column(name="next_para_id",nullable=true)
     private Long nextParaId;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Book getBook() {
-        return book;
-    }
-
-    public void setBook(Book book) {
+    public Paragraph() {}
+    public Paragraph(Book book, String author, String content, Long prevParaId, Long nextParaId) {
         this.book = book;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
         this.author = author;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
         this.content = content;
-    }
-
-    public Long getPrevParaId() {
-        return prevParaId;
-    }
-
-    public void setPrevParaId(Long prevParaId) {
         this.prevParaId = prevParaId;
-    }
-
-    public Long getNextParaId() {
-        return nextParaId;
-    }
-
-    public void setNextParaId(Long nextParaId) {
         this.nextParaId = nextParaId;
     }
-
     
 }

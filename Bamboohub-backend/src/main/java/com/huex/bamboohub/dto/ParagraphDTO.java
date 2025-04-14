@@ -1,47 +1,20 @@
 package com.huex.bamboohub.dto;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.beans.ConstructorProperties;
+import java.util.Date;
+
+@Getter @Setter @AllArgsConstructor
 public class ParagraphDTO {
     private Long id; //must be null for new paragraphs
+    private Date createTime;
     private Long bookId;
     private String author;
     private String content;
     private Long prevParaId;
     private Long nextParaId;
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public Long getBookId() {        
-        return bookId;
-    }
-    public void setBookId(Long bookId) {
-        this.bookId = bookId;        
-    }
-    public String getAuthor() {
-        return author;
-    }
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-    public String getContent() {
-        return content;
-    }
-    public void setContent(String content) {
-        this.content = content;
-    }
-    public Long getPrevParaId() {
-        return prevParaId;
-    }
-    public void setPrevParaId(Long prevParaId) {
-        this.prevParaId = prevParaId;
-    }
-    public Long getNextParaId() {
-        return nextParaId;
-    }
-    public void setNextParaId(Long nextParaId) {
-        this.nextParaId = nextParaId;
-    }
-    
+
+
 }

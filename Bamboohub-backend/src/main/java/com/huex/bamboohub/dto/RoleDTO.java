@@ -1,29 +1,18 @@
 package com.huex.bamboohub.dto;
 import com.huex.bamboohub.dao.Role.RoleType;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.util.Date;
 
+@Getter @Setter @AllArgsConstructor
 public class RoleDTO {
+    private Long id;
+    private Date createTime;
     private Long bookId;
     private Long userId;
     private RoleType roleType;
-    public Long getBookId() {
-        return bookId;
-    }
-    public void setBookId(Long bookId) {
-        this.bookId = bookId;
-    }
-    public Long getUserId() {
-        return userId;
-    }
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-    public RoleType getRoleType() {
-        return roleType;
-    }
-    public void setRoleType(RoleType roleType) {
-        this.roleType = roleType;
-    }
 
-    
+
 }

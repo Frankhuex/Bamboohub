@@ -4,8 +4,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.cache.Cache;
 
 import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.dao.*;
@@ -22,14 +26,14 @@ public class ParagraphServiceImpl implements ParagraphService {
     @Autowired private BookRepo bookRepo;
     @Autowired private ParagraphConverter paraConverter;
     @Autowired private BookConverter bookConverter;
-
+    @Autowired private CacheManager cacheManager;
     
 
     @Override
     public List<ParagraphDTO> getParagraphsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
-        if (!book.getIsPublic() && !roleUtil.canView(token,bookId)) {
+        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,bookId)) {
             throw new IllegalArgumentException("No permission to get paragraphs.");
         }
         return getParagraphsByBookDAO(book);
@@ -44,17 +48,18 @@ public class ParagraphServiceImpl implements ParagraphService {
             throw new IllegalArgumentException("More than one book with title " + bookTitle + " found.");
         }
         Book book=books.get(0);
-        if (!book.getIsPublic() && !roleUtil.canView(token,book.getId())) {
+        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,book.getId())) {
             throw new IllegalArgumentException("No permission to get paragraphs.");
         }
         return getParagraphsByBookDAO(book);
     }
 
     @Override
+    @Cacheable(value="paraIdsOfBook",key="'bookId:'+#bookId")
     public List<Long> getParaIdsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
-        if (!book.getIsPublic() && !roleUtil.canView(token,bookId)) {
+        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,bookId)) {
             throw new IllegalArgumentException("No permission to get paragraph ids.");
         }
         return getParaIdsByBookDAO(book);
@@ -63,10 +68,11 @@ public class ParagraphServiceImpl implements ParagraphService {
 
 
     @Override
-    public Long addNewParagraph(String token,ParagraphRequest paraReq) throws IllegalArgumentException {
-        Paragraph prevPara=paraRepo.findById(paraReq.getPrevParaId())
+    public Long addNewParagraph(String token, ParagraphReq paraReq) throws IllegalArgumentException {
+        Long prevParaId=paraReq.getPrevParaId();
+        Paragraph prevPara=paraRepo.findById(prevParaId)
             .orElseThrow(()->new IllegalArgumentException("Previous paragraph with id "+paraReq.getPrevParaId()+" not found."));
-        
+        Long bookId=prevPara.getBook().getId();
         if (!roleUtil.canEdit(token,prevPara.getBook().getId())) {
             throw new IllegalArgumentException("No permission to add new paragraph.");
         }
@@ -81,13 +87,17 @@ public class ParagraphServiceImpl implements ParagraphService {
 
         para.setNextParaId(nextId);
         paraRepo.save(para);
+
+        Paragraph nextPara=null;
         try {
-            Paragraph nextPara=paraRepo.findById(nextId)
+            nextPara=paraRepo.findById(nextId)
                 .orElseThrow(()->new Exception(""));
             nextPara.setPrevParaId(thisId);
             paraRepo.save(nextPara);  
         } catch (Exception e) {}
 
+        evictCacheParas(new Long[]{prevParaId,nextId});
+        evictCacheParaIds(bookId);
         return para.getId();
     }
 
@@ -95,7 +105,7 @@ public class ParagraphServiceImpl implements ParagraphService {
     public void deleteParagraphById(String token,Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
-
+        Long bookId=paragraph.getBook().getId();
         if (!roleUtil.canEdit(token,paragraph.getBook().getId())) {
             throw new IllegalArgumentException("No permission to delete paragraph.");
         }
@@ -103,37 +113,46 @@ public class ParagraphServiceImpl implements ParagraphService {
         if (paragraph.getBook().getStartPara().getId().equals(id)) {
             throw new IllegalArgumentException("Cannot delete the start paragraph of a book.");
         }
-        if (paragraph.getPrevParaId()!=null) {
-            Paragraph prevParagraph = paraRepo.findById(paragraph.getPrevParaId())
-                .orElseThrow(()->new IllegalArgumentException("Previous paragraph with id "+paragraph.getPrevParaId()+" not found."));
-            prevParagraph.setNextParaId(paragraph.getNextParaId());
+        Long prevParaId=paragraph.getPrevParaId();
+        Long nextParaId=paragraph.getNextParaId();
+        if (prevParaId!=null) {
+            Paragraph prevParagraph = paraRepo.findById(prevParaId)
+                .orElseThrow(()->new IllegalArgumentException("Previous paragraph with id "+prevParaId+" not found."));
+            prevParagraph.setNextParaId(nextParaId);
             paraRepo.save(prevParagraph);
         }
-        if (paragraph.getNextParaId()!=null) {
-            Paragraph nextParagraph = paraRepo.findById(paragraph.getNextParaId())
-                .orElseThrow(()->new IllegalArgumentException("Next paragraph with id "+paragraph.getNextParaId()+" not found."));
-            nextParagraph.setPrevParaId(paragraph.getPrevParaId());
+        if (nextParaId!=null) {
+            Paragraph nextParagraph = paraRepo.findById(nextParaId)
+                .orElseThrow(()->new IllegalArgumentException("Next paragraph with id "+nextParaId+" not found."));
+            nextParagraph.setPrevParaId(prevParaId);
             paraRepo.save(nextParagraph);
         }
+
+        evictCacheParas(new Long[]{id,prevParaId,nextParaId});
+        evictCacheParaIds(bookId);
         paraRepo.delete(paragraph);
     }
 
     @Override
+    @Cacheable(value = "paragraphs", key = "'para:' + #id", unless = "#result == null")
     public ParagraphDTO getParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
-        if (!paragraph.getBook().getIsPublic() && !roleUtil.canView(token,paragraph.getBook().getId())) {
+        if (paragraph.getBook().getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,paragraph.getBook().getId())) {
             throw new IllegalArgumentException("No permission to get paragraph.");
         }
+        Long bookId=paragraph.getBook().getId();
         return paraConverter.toDTO(paragraph);
     }
 
     @Override
     @Transactional
-    public ParagraphDTO updateParagraphById(String token, Long id,ParagraphUpdateRequest paraUpdReq) throws IllegalArgumentException {
+    @CachePut(value = "paragraphs", key = "'para:' + #id", unless = "#result == null")
+    public ParagraphDTO updateParagraphById(String token, Long id, ParagraphUpdateReq paraUpdReq) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
-        if (!roleUtil.canEdit(token,paragraph.getBook().getId())) {
+        Book book=paragraph.getBook();
+        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,paragraph.getBook().getId())) {
             throw new IllegalArgumentException("No permission to update paragraph.");
         }
         String author=paraUpdReq.getAuthor();
@@ -149,12 +168,14 @@ public class ParagraphServiceImpl implements ParagraphService {
     }
 
     @Override
+    @CachePut(value = "paragraphs", key = "'para:' + #id", unless = "#result == null")
     public ParagraphDTO moveUpParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
         Book book=paragraph.getBook();
+        Long bookId=book.getId();
 
-        if (!roleUtil.canEdit(token,book.getId())) {
+        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book.getId())) {
             throw new IllegalArgumentException("No permission to move paragraph up.");
         }
 
@@ -194,16 +215,21 @@ public class ParagraphServiceImpl implements ParagraphService {
             prevprevParagraph.setNextParaId(id);
             paraRepo.save(prevprevParagraph);
         }
+
+        evictCacheParas(new Long[]{prevprevId,prevId,nextId});
+        evictCacheParaIds(bookId);
+
         return paraConverter.toDTO(paragraph);
     }
 
     @Override
+    @CachePut(value = "paragraphs", key = "'para:' + #id", unless = "#result == null")
     public ParagraphDTO moveDownParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
         Book book=paragraph.getBook();
-
-        if (!roleUtil.canEdit(token,book.getId())) {
+        Long bookId=book.getId();
+        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book.getId())) {
             throw new IllegalArgumentException("No permission to move paragraph down.");
         }
 
@@ -242,6 +268,9 @@ public class ParagraphServiceImpl implements ParagraphService {
             nextnextParagraph.setPrevParaId(id);
             paraRepo.save(nextnextParagraph);
         }
+        evictCacheParas(new Long[]{prevId,nextId,nextnextId});
+        evictCacheParaIds(bookId);
+
         return paraConverter.toDTO(paragraph);
     }
 
@@ -291,5 +320,23 @@ public class ParagraphServiceImpl implements ParagraphService {
             paraIds.add(paragraph.getNextParaId());
         }
         return paraIds;
+    }
+
+    private void evictCacheParas(Long[] paraIds) {
+        Cache cacheParas = cacheManager.getCache("paragraphs");
+        if (cacheParas != null){
+            for (Long id : paraIds) {
+                if (id!=null) {
+                    cacheParas.evict("para:"+id);
+                }
+            }
+        }
+    }
+
+    private void evictCacheParaIds(Long bookId) {
+        Cache cacheParaIds = cacheManager.getCache("paraIdsOfBook");
+        if (cacheParaIds != null) {
+            cacheParaIds.evict("bookId:"+bookId);
+        }
     }
 }
