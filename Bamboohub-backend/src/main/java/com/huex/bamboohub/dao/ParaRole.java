@@ -1,21 +1,20 @@
 package com.huex.bamboohub.dao;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.time.LocalDateTime;
-import java.util.List;
 
 import jakarta.persistence.*;
-import static jakarta.persistence.GenerationType.IDENTITY;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 
-@Getter @Setter
+import java.util.Date;
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
 @Entity
-@Table(name="role")
-public class Role {
+@Table(name="para_role")
+public class ParaRole {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
@@ -26,8 +25,8 @@ public class Role {
     private Date createTime;
 
     @ManyToOne
-    @JoinColumn(name = "book_id", referencedColumnName = "id", nullable = false)
-    private Book book;  // 关联到 Book 实体
+    @JoinColumn(name = "para_id", referencedColumnName = "id", nullable = false)
+    private Paragraph paragraph;  // 关联到 Paragraph 实体
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
@@ -38,16 +37,14 @@ public class Role {
     private RoleType roleType;  // 角色类型
 
     public enum RoleType {
-        VIEWER,
-        EDITOR,
-        ADMIN,
-        OWNER;
+        CREATOR,
+        CONTRIBUTOR
     }
 
-    public Role() {}
-    public Role(User user, Book book, RoleType roleType) {
+    public ParaRole() {}
+    public ParaRole(User user, Paragraph paragraph, RoleType roleType) {
         this.user = user;
-        this.book = book;
+        this.paragraph = paragraph;
         this.roleType = roleType;
     }
 }

@@ -3,14 +3,16 @@ package com.huex.bamboohub.util;
 import io.jsonwebtoken.*;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.huex.bamboohub.dao.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class JwtUtil {
@@ -43,37 +45,39 @@ public class JwtUtil {
         return token;
     }
 
-    public Claims parseToken(String token) {
-        JwtParser jwtParser=Jwts.parser();
-        Jws<Claims> claimsJws=jwtParser.setSigningKey(signature).parseClaimsJws(token);
-        Claims claims=claimsJws.getBody();
-        Long userId=claims.get("userId",Long.class);
-        String username=claims.get("username",String.class);
-        String uuid=claims.getId();
-        String subject=claims.getSubject();
-        Date expiration=claims.getExpiration();
-        System.out.println("Expiration date: "+expiration);
-        return claims;
+    public Optional<Claims> parseToken(String token) {
+        if (!StringUtils.hasText(token)) return Optional.empty();
+        try {
+            JwtParser jwtParser = Jwts.parser();
+            Jws<Claims> claimsJws = jwtParser.setSigningKey(signature).parseClaimsJws(token);
+            Claims claims = claimsJws.getBody();
+            Long userId = claims.get("userId", Long.class);
+            String username = claims.get("username", String.class);
+            String uuid = claims.getId();
+            String subject = claims.getSubject();
+            Date expiration = claims.getExpiration();
+            System.out.println("Expiration Date: " + expiration);
+            return Optional.of(claims);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
-    public User parseUser(String token) {
-        Claims claims=parseToken(token);
-        Long userId=claims.get("userId",Long.class);
-        String username=claims.get("username",String.class);
-        User user=userRepo.findByIdAndUsername(userId,username)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
-        return user;
-    }
-
-    public Long parseUserId(String token) {
-        Claims claims=parseToken(token);
-        Long userId=claims.get("userId",Long.class);
-        return userId;
-    }
-
-    public String parseUsername(String token) {
-        Claims claims=parseToken(token);
-        String username=claims.get("username",String.class);
-        return username;
+    public Optional<User> parseUser(String token) {
+        if (!StringUtils.hasText(token)) return Optional.empty();
+        try {
+            Claims claims = parseToken(token).orElseThrow(() -> new IllegalArgumentException("Invalid token"));
+            Long userId = claims.get("userId", Long.class);
+            String username = claims.get("username", String.class);
+            User user = userRepo.findByIdAndUsername(userId, username)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
+            Date expiration=claims.getExpiration();
+            if (expiration.before(new Date())) {
+                throw new IllegalArgumentException("Token expired");
+            }
+            return Optional.ofNullable(user);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 }

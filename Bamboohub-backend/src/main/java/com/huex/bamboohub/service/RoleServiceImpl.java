@@ -7,8 +7,13 @@ import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.request.*;
 import com.huex.bamboohub.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class RoleServiceImpl implements RoleService {
@@ -20,85 +25,179 @@ public class RoleServiceImpl implements RoleService {
     @Autowired private RoleUtil roleUtil;
     @Autowired private JwtUtil jwtUtil;
     @Autowired private RoleConverter roleConverter;
+    @Autowired private CacheManager cacheManager;
 
     @Override
     @CacheEvict(value="rolesOfBook", key="'bookId:'+#roleReq.getBookId()")
-    public void putRole(String token, RoleReq roleReq) throws IllegalArgumentException {
-        User employee=userRepo.findByUsername(roleReq.getUsername())
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Long employeeId=employee.getId();
-
-        Book book=bookRepo.findById(roleReq.getBookId())
-            .orElseThrow(() -> new IllegalArgumentException("Book not found"));
-        Long bookId=book.getId();
-
-        User employer=jwtUtil.parseUser(token);
-        Long employerId=employer.getId();
-        Role employerRole=roleRepo.findByUserAndBook(employer,book)
-            .orElseThrow(() -> new IllegalArgumentException("No permission to assign role"));
-        RoleType employerRoleType=employerRole.getRoleType();
-        RoleType newRoleType=roleReq.getRoleType();
-
-        if (employerRoleType!=RoleType.OWNER && employerRoleType!=RoleType.ADMIN) {
-            //非admin或owner，禁止操作
-            throw new IllegalArgumentException("No permission to assign role");    
-        }
-        if (newRoleType==RoleType.OWNER) {
-            //不能给被操作者赋予owner权限
+    public RoleDTO putRole(String token, RoleReq roleReq) throws IllegalArgumentException {
+        //不能给被操作者赋予owner权限
+        if (roleReq.getRoleType()==RoleType.OWNER) {
             throw new IllegalArgumentException("Cannot assign owner role");
         }
 
-        if (!roleUtil.hasAnyRole(employeeId,bookId)) {
-            //当被操作者是新人无身份
-            Role newRole=roleConverter.toDAO(roleReq);
-            roleRepo.save(newRole);
-        } else {
-            //当被操作者已有身份
-            Role existingRole=roleRepo.findByUserAndBook(employee,book)
-                .orElseThrow(() -> new IllegalArgumentException("Role not found")); //此报错为摆设，因为前面检查过
-            RoleType existingRoleType=existingRole.getRoleType();
-            if (existingRoleType==newRoleType) {
-                //当被操作者的身份与新身份相同，无需修改
-                throw new IllegalArgumentException("Duplicate role");
-            }
-            if (existingRoleType==RoleType.OWNER) {
-                //当被操作者的身份是owner，禁止被修改
-                throw new IllegalArgumentException("No permission to assign role");
-            }
-            if (existingRoleType==RoleType.ADMIN) {
-                //当被操作者的身份是admin，只有owner能修改他
-                if (employerRoleType==RoleType.OWNER) {
-                    existingRole.setRoleType(newRoleType);
-                    roleRepo.save(existingRole);
-                } else  {
-                    throw new IllegalArgumentException("No permission to assign role");
-                }
-            } else {
-                //当被操作者的身份是editor或viewer，任何admin或owner都能修改他
-                existingRole.setRoleType(newRoleType);
-                roleRepo.save(existingRole);
-            }
+        // Check if employee exists
+        User employee=userRepo.findById(roleReq.getUserId())
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Check if book exists
+        Book book=bookRepo.findById(roleReq.getBookId())
+            .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+
+        // Check permission
+        if (roleUtil.hasRoleCanAdmin(token,book)) {throw new IllegalArgumentException("No permission to assign role");}
+
+        // Check if employee already has role
+        if (roleUtil.hasAnyRole(employee,book)) {throw new IllegalArgumentException("Alread has role");}
+
+        Role newRole=roleConverter.toDAO(roleReq);
+        Role savedRole=roleRepo.save(newRole);
+
+        return roleConverter.toDTO(savedRole);
+    }
+
+    @Override
+    public RoleDTO updateRole(String token, Long roleId, Role.RoleType newRoleType) {
+        //不能给被操作者赋予owner权限
+        if (newRoleType==RoleType.OWNER) {throw new IllegalArgumentException("Cannot assign owner role");}
+
+        // Get role and check if it exists
+        Role role=roleRepo.findById(roleId)
+            .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+        Book book=role.getBook();
+        User employee=role.getUser();
+
+        // Check permission
+        if (roleUtil.hasRoleCanAdmin(token,book)) {throw new IllegalArgumentException("No permission to assign role");}
+
+        // Check if employee already has role
+        if (!roleUtil.hasAnyRole(employee,book)) {throw new IllegalArgumentException("User"+employee.getId()+" has no role");}
+
+
+        RoleType existingRoleType=role.getRoleType();
+        if (existingRoleType==newRoleType) {
+            //当被操作者的身份与新身份相同，无需修改
+            throw new IllegalArgumentException("Duplicate role");
         }
+        if (existingRoleType==RoleType.OWNER) {
+            //当被操作者的身份是owner，禁止被修改
+            throw new IllegalArgumentException("No permission to assign role");
+        }
+        if (existingRoleType==RoleType.ADMIN && !roleUtil.isOwner(token,book)) {
+            //当被操作者的身份是admin，只有owner能修改他
+            throw new IllegalArgumentException("No permission to assign role");
+        }
+
+        role.setRoleType(newRoleType);
+        Role savedRole=roleRepo.save(role);
+        return roleConverter.toDTO(savedRole);
+    }
+
+    @Override
+    public boolean deleteRoleById(String token, Long roleId) {
+        Role role=roleRepo.findById(roleId)
+            .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+        deleteRoleByBookIdAndEmployee(token, role.getBook().getId(), role.getUser());
+
+        // Clear cache of roles of book
+        Cache cache=cacheManager.getCache("rolesOfBook");
+        if (cache!=null) {
+            cache.evict("bookId:"+role.getBook().getId());
+        }
+        return true;
     }
 
     @Override
     @CacheEvict(value="rolesOfBook", key="'bookId:'+#bookId")
-    public void deleteRoleByBookIdAndUsername(String token, Long bookId, String username) throws IllegalArgumentException {
+    public boolean deleteRoleByBookIdAndUsername(String token, Long bookId, String username) throws IllegalArgumentException {
         User employee=userRepo.findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Long employeeId=employee.getId();
+        deleteRoleByBookIdAndEmployee(token, bookId, employee);
+        return true;
+    }
 
+
+
+
+
+
+
+
+    @Override
+    @Cacheable(value="rolesOfBook", key="'bookId:'+#bookId")
+    public RolesDTO getRolesByBookId(String token, Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+        if ((book.getScope()==Book.Scope.PRIVATE
+                || book.getScope()==Book.Scope.ALLSEARCH
+            ) && !roleUtil.hasRoleCanView(token,book))
+        {
+            throw new IllegalArgumentException("No permission to access book");
+        }
+        List<Role> roles=roleRepo.findByBook(book);
+        return roleConverter.toRolesDTO(roles);
+    }
 
-        User employer=jwtUtil.parseUser(token);
+    @Override
+    public RoleType getOwnRoleByBookId(String token, Long bookId) {
+        Book book=bookRepo.findById(bookId)
+            .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+        if (!roleUtil.hasAnyRole(token,book)) {
+            throw new IllegalArgumentException("No role");
+        }
+        return roleUtil.getRoleType(token,book);
+    }
+
+    @Override
+    @CacheEvict(value="rolesOfBook", key="'bookId:'+#book.getId()")
+    public Role putRoleWithoutToken(User user, Book book, RoleType roleType) {
+        // 查找现有的角色并更新，找不到则创建新角色
+        Role role = roleRepo.findByUserAndBook(user, book)
+                .map(existingRole -> {
+                    existingRole.setRoleType(roleType);
+                    return existingRole;
+                })
+                .orElseGet(() -> new Role(user, book, roleType));
+        return roleRepo.save(role);
+    }
+
+    @Override
+    @CacheEvict(value="rolesOfBook", key="'bookId:'+#bookId")
+    public RolesDTO changeOwner(String token, Long bookId, Long targetId) {
+        User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));
+        Book book=bookRepo.findById(bookId).orElseThrow(() -> new IllegalArgumentException("Book not found"));
+        User targetUser=userRepo.findById(targetId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Role myRole=roleRepo.findByUserAndBook(user,book).orElseThrow(() -> new IllegalArgumentException("No role found"));
+        Role targetRole=roleRepo.findByUserAndBook(targetUser,book).orElseThrow(() -> new IllegalArgumentException("No role found"));
+
+        if (myRole.getRoleType()!=RoleType.OWNER) throw new IllegalArgumentException("You are not the owner");
+
+        myRole.setRoleType(RoleType.ADMIN);
+        targetRole.setRoleType(RoleType.OWNER);
+        roleRepo.save(myRole);
+        roleRepo.save(targetRole);
+        return getRolesByBookId(token, bookId);
+    }
+
+
+
+
+
+
+
+    private void deleteRoleByBookIdAndEmployee(String token, Long bookId, User employee) throws IllegalArgumentException {
+        Book book=bookRepo.findById(bookId)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+
+        User employer=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
+
         Long employerId=employer.getId();
         Role employerRole=roleRepo.findByUserAndBook(employer,book)
-            .orElseThrow(() -> new IllegalArgumentException("No permission to delete role"));
+                .orElseThrow(() -> new IllegalArgumentException("No permission to delete role"));
         RoleType employerRoleType=employerRole.getRoleType();
 
         Role existingRole=roleRepo.findByUserAndBook(employee,book)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found")); 
+                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
         RoleType existingRoleType=existingRole.getRoleType();
 
 
@@ -106,11 +205,12 @@ public class RoleServiceImpl implements RoleService {
             //不能删除owner
             throw new IllegalArgumentException("Cannot delete owner role");
         }
-        if (existingRoleType==employerRoleType  //1.任何非owner都可删除自己
-            ||
-            employerRoleType==RoleType.OWNER //2.owner可删除非owner
-            || 
-            (employerRoleType==RoleType.ADMIN) //3.admin可删除非admin
+        //已保证目标非owner
+        if (existingRoleType==employerRoleType  //任何非owner都可删除自己
+                || //已保证目标和自己身份不同且目标非owner
+                employerRoleType==RoleType.OWNER //则目标<owner，显然可以
+                ||
+                employerRoleType==RoleType.ADMIN //则目标<admin，显然可以
         ) {
             roleRepo.deleteById(existingRole.getId());
         } else {
@@ -118,24 +218,4 @@ public class RoleServiceImpl implements RoleService {
         }
 
     }
-
-    @Override
-    public RolesDTO getRolesByBookId(String token, Long bookId) throws IllegalArgumentException {
-        Book book=bookRepo.findById(bookId)
-            .orElseThrow(() -> new IllegalArgumentException("Book not found"));
-        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.hasAnyRole(token,bookId)) {
-            throw new IllegalArgumentException("No permission to view roles");
-        }
-        return roleUtil.getRolesByBookIdWithoutToken(book);
-    }
-
-    @Override
-    public RoleType getRoleByBookId(String token, Long bookId) {
-        if (!roleUtil.hasAnyRole(token,bookId)) {
-            throw new IllegalArgumentException("No permission to view roles");
-        }
-        return roleUtil.getRoleType(token,bookId);
-    }
-
-
 }

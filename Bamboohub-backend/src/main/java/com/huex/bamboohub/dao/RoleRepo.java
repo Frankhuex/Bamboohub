@@ -10,5 +10,6 @@ public interface RoleRepo extends JpaRepository<Role, Long> {
     boolean existsByUserAndBook(User user, Book book);
     List<Role> findByUser(User user);
     List<Role> findByBook(Book book);
+
     //List<Role> findByBookAndRoleType(Book book, Role.RoleType roleType);
 }

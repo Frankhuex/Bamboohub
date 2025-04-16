@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter @Setter @AllArgsConstructor
 public class RoleReq {
-    private String username;
+    private Long userId;
     private Long bookId;
     private Role.RoleType roleType;
 }

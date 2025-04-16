@@ -1,14 +1,12 @@
 package com.huex.bamboohub.request;
-import com.huex.bamboohub.dao.Book;
+import com.huex.bamboohub.dao.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter @AllArgsConstructor
-public class BookUpdateReq {
-    private String title;
-    private Book.Scope scope;
-
-
-
+public class ParaRoleReq {
+    private Long userId;
+    private Long paraId;
+    private ParaRole.RoleType roleType;
 }

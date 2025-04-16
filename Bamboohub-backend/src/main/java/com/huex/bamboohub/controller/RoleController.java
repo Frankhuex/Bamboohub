@@ -1,5 +1,6 @@
 package com.huex.bamboohub.controller;
 
+import com.huex.bamboohub.dto.RoleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,24 +15,29 @@ import com.huex.bamboohub.dao.Role.RoleType;
 @RestController
 public class RoleController {
     @Autowired private RoleService roleService;
-    @Autowired private JwtUtil jwtUtil;
-    @Autowired private UserConverter userConverter;
 
-    @PutMapping("/role")
-    public Response<String> putRole(@RequestHeader("Authorization") String token, @RequestBody RoleReq roleReq) {
+    @PostMapping("/bookRole")
+    public Response<RoleDTO> putRole(@RequestHeader("Authorization") String token, @RequestBody RoleReq roleReq) {
         try {
-            roleService.putRole(token, roleReq);
-            return Response.newSuccess("Role updated successfully");
+            return Response.newSuccess(roleService.putRole(token, roleReq));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }
     }
 
-    @DeleteMapping("/book/{bookId}/role/{username}")
-    public Response<String> deleteRole(@RequestHeader("Authorization") String token, @PathVariable Long bookId, @PathVariable String username) {
+    @PutMapping("bookRole/{roleId}/{roleType}")
+    public Response<RoleDTO> updateRole(@RequestHeader("Authorization") String token, @PathVariable Long roleId, @PathVariable RoleType roleType) {
         try {
-            roleService.deleteRoleByBookIdAndUsername(token, bookId, username);
-            return Response.newSuccess("Role deleted successfully");
+            return Response.newSuccess(roleService.updateRole(token, roleId, roleType));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+    @DeleteMapping("/bookRole/{roleId}")
+    public Response<Boolean> deleteRole(@RequestHeader("Authorization") String token, @PathVariable Long roleId) {
+        try {
+
+            return Response.newSuccess(roleService.deleteRoleById(token, roleId));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }
@@ -46,10 +52,19 @@ public class RoleController {
         }
     }
 
-    @GetMapping("/book/{bookId}/role")
-    public Response<RoleType> getRole(@RequestHeader("Authorization") String token, @PathVariable Long bookId) {
+    @GetMapping("/book/{bookId}/ownRole")
+    public Response<RoleType> getOwnRole(@RequestHeader("Authorization") String token, @PathVariable Long bookId) {
         try {
-            return Response.newSuccess(roleService.getRoleByBookId(token, bookId));
+            return Response.newSuccess(roleService.getOwnRoleByBookId(token, bookId));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @PutMapping("/book/{bookId}/changeOwner/{targetId}")
+    public Response<RolesDTO> changeOwner(@RequestHeader("Authorization") String token, @PathVariable Long bookId, @PathVariable Long targetId) {
+        try {
+            return Response.newSuccess(roleService.changeOwner(token, bookId, targetId));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }

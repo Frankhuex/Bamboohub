@@ -6,9 +6,11 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 
 @Getter @Setter
@@ -21,7 +23,7 @@ public class User {
     private Long id;
 
     @Column(name="create_time")
-    @CreatedDate
+    @CreationTimestamp
     private Date createTime;
 
     @Column(name="username",nullable=false,unique=true)
@@ -35,6 +37,13 @@ public class User {
 
     @OneToMany(mappedBy="user",cascade=CascadeType.ALL,orphanRemoval=true)
     private List<Role> roles=new ArrayList<>();
+
+    @OneToMany(mappedBy="target",cascade=CascadeType.ALL,orphanRemoval=true)
+    private List<Follow> follows=new ArrayList<>();
+
+    @OneToMany(mappedBy="source",cascade=CascadeType.ALL,orphanRemoval=true)
+    private List<Follow> sources=new ArrayList<>();
+
 
     public User() {}
     public User(String username, String password, String nickname) {

@@ -2,6 +2,7 @@ package com.huex.bamboohub.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import com.huex.bamboohub.service.*;
@@ -22,14 +23,14 @@ public class ParagraphController {
         }
     }
 
-    @GetMapping("/book-title/{title}/paragraphs")
-    public Response<List<ParagraphDTO>> getParagraphsByTitle(@RequestHeader("Authorization") String token, @PathVariable("title") String title) {
-        try { 
-            return Response.newSuccess(paragraphService.getParagraphsByBookTitle(token,title));
-        } catch (Exception e) { 
-            return Response.newFail(e.getMessage());
-        }
-    }
+//    @GetMapping("/book-title/{title}/paragraphs")
+//    public Response<List<ParagraphDTO>> getParagraphsByTitle(@RequestHeader("Authorization") String token, @PathVariable("title") String title) {
+//        try {
+//            return Response.newSuccess(paragraphService.getParagraphsByBookTitle(token,title));
+//        } catch (Exception e) {
+//            return Response.newFail(e.getMessage());
+//        }
+//    }
 
     @GetMapping("/book/{bookId}/paraIds")
     public Response<List<Long>> getParaIdsByBookId(@RequestHeader("Authorization") String token, @PathVariable("bookId") Long bookId) {
@@ -41,7 +42,7 @@ public class ParagraphController {
     }
 
     @PostMapping("/paragraph")
-    public Response<Long> addNewParagraph(@RequestHeader("Authorization") String token, @RequestBody ParagraphReq paraReq) {
+    public Response<ParagraphDTO> addNewParagraph(@RequestHeader("Authorization") String token, @RequestBody ParagraphReq paraReq) {
         try { 
             return Response.newSuccess(paragraphService.addNewParagraph(token, paraReq));
         } catch (Exception e) { 
@@ -50,10 +51,10 @@ public class ParagraphController {
     }
 
     @DeleteMapping("/paragraph/{id}")
-    public Response<String> deleteParagraph(@RequestHeader("Authorization") String token, @PathVariable("id") Long id) {
+    public Response<Boolean> deleteParagraph(@RequestHeader("Authorization") String token, @PathVariable("id") Long id) {
         try {
             paragraphService.deleteParagraphById(token,id);
-            return Response.newSuccess("Paragraph deleted successfully.");
+            return Response.newSuccess(true);
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }
@@ -109,6 +110,15 @@ public class ParagraphController {
     public Response<List<ParagraphDTO>> getAllParagraphs(@RequestHeader("Authorization") String token ) {
         try {
             return Response.newSuccess(paragraphService.getAllParagraphs(token));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/paragraphs/search")
+    public Response<List<ParagraphDTO>> searchParagraphs(@RequestHeader(value="Authorization",required = false) String token, @RequestParam("query") String query) {
+        try {
+            return Response.newSuccess(paragraphService.searchParagraphsByAny(token,query));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }

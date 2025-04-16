@@ -40,6 +40,14 @@ public class ParagraphConverter {
         return paraDTOs;
     }
 
+    public List<ParagraphDTO> toDTOs(Paragraph[] paragraphs) {
+        List<ParagraphDTO> paraDTOs = new ArrayList<>();
+        for (Paragraph paragraph : paragraphs) {
+            paraDTOs.add(toDTO(paragraph));
+        }
+        return paraDTOs;
+    }
+
 
     public Paragraph toDAO(ParagraphReq paraReq) throws IllegalArgumentException {
         Paragraph prevPara=paraRepo.findById(paraReq.getPrevParaId())
