@@ -2,6 +2,7 @@ package com.huex.bamboohub.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import com.huex.bamboohub.service.*;
@@ -109,6 +110,15 @@ public class ParagraphController {
     public Response<List<ParagraphDTO>> getAllParagraphs(@RequestHeader("Authorization") String token ) {
         try {
             return Response.newSuccess(paragraphService.getAllParagraphs(token));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/paragraphs/search")
+    public Response<List<ParagraphDTO>> searchParagraphs(@RequestHeader(value="Authorization",required = false) String token, @RequestParam("query") String query) {
+        try {
+            return Response.newSuccess(paragraphService.searchParagraphsByAny(token,query));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }

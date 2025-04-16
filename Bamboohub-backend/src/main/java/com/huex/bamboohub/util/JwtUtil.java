@@ -17,6 +17,7 @@ import com.huex.bamboohub.dao.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class JwtUtil {
@@ -63,6 +64,7 @@ public class JwtUtil {
     }
 
     public User parseUser(String token) {
+        if (!StringUtils.hasText(token)) return null;
         Claims claims=parseToken(token);
         Long userId=claims.get("userId",Long.class);
         String username=claims.get("username",String.class);
@@ -72,12 +74,14 @@ public class JwtUtil {
     }
 
     public Long parseUserId(String token) {
+        if (!StringUtils.hasText(token)) return null;
         Claims claims=parseToken(token);
         Long userId=claims.get("userId",Long.class);
         return userId;
     }
 
     public String parseUsername(String token) {
+        if (!StringUtils.hasText(token)) return null;
         Claims claims=parseToken(token);
         String username=claims.get("username",String.class);
         return username;

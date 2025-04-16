@@ -74,6 +74,15 @@ public class BookController {
         }
     }
 
+    @GetMapping("books/search")
+    public Response<List<BookDTO>> searchBooksByTitle(@RequestParam("title") String title) {
+        try {
+            return Response.newSuccess(bookService.searchBooksByTitle(title));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
 
 
 

@@ -5,8 +5,6 @@ import com.huex.bamboohub.dao.*;
 import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.request.*;
 
-import java.util.List;
-
 
 @Component
 public class RoleConverter {
@@ -19,7 +17,7 @@ public class RoleConverter {
                 role.getId(),
                 role.getCreateTime(),
                 role.getBook().getId(),
-                userConverter.toSimpleDTO(role.getUser()),
+                userConverter.toDTO(role.getUser()),
                 role.getRoleType()
         );
     }

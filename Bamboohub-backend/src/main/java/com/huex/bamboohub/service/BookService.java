@@ -8,14 +8,10 @@ public interface BookService {
     BookDTO addNewBook(String token, BookReq bookReq);
     BookDTO getBookById(String token, Long id);
 
-    //List<Long> getAllPrivateBookIds(String token);
-    //List<Long> getAllPublicBookIds();
-
-    //List<BookDTO> getAllPrivateBooks(String token);
     List<BookDTO> getMyBooks(String token);
     List<BookDTO> getBooksByScope(String token, Book.Scope scope);
 
-    //List<BookDTO> getAllPublicBooks();
+    List<BookDTO> searchBooksByTitle(String title);
 
     boolean deleteBookById(String token, Long id);
     BookDTO updateBookById(String token, Long id, BookUpdateReq bookUpdReq);

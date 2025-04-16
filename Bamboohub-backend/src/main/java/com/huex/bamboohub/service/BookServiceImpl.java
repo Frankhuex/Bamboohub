@@ -27,11 +27,6 @@ public class BookServiceImpl implements BookService {
     @Override
     @CacheEvict(value = "books", allEntries = true)
     public BookDTO addNewBook(String token, BookReq bookReq) throws IllegalArgumentException {
-//        List<Book> books = bookRepo.findByTitle(bookReq.getTitle());
-//        if (!CollectionUtils.isEmpty(books)) {
-//            throw new IllegalArgumentException("Book title "+bookReq.getTitle()+" already exists.");
-//        }
-        
         Book book=bookConverter.toDAO(bookReq);
         Book savedBook=bookRepo.save(book);
 
@@ -61,27 +56,8 @@ public class BookServiceImpl implements BookService {
         return bookConverter.toDTO(book);
     }
 
-    //@Override
-    public List<Long> getAllPrivateBookIds(String token) {
-        List<Role> roles=roleRepo.findByUser(jwtUtil.parseUser(token));
-        List<Long> bookIds = new ArrayList<>();
-        for (Role role : roles) {
-            bookIds.add(role.getBook().getId());
-        }
-        return bookIds;
-    }
 
-    //@Override
-    public List<Long> getAllPublicBookIds() {
-        List<Book> books = bookRepo.findByScopeIn(Arrays.asList(Book.Scope.ALLREAD, Book.Scope.ALLEDIT));
-        List<Long> bookIds = new ArrayList<>();
-        for (Book book : books) {
-            bookIds.add(book.getId());
-        }
-        return bookIds;
-    }
-
-    //@Override
+    @Override
     public List<BookDTO> getMyBooks(String token) {
         List<Role> roles=roleRepo.findByUser(jwtUtil.parseUser(token));
         List<BookDTO> bookDTOs = new ArrayList<>();
@@ -105,18 +81,13 @@ public class BookServiceImpl implements BookService {
         return bookConverter.toDTOs(bookRepo.findByScope(scope));
     }
 
-    //@Override
-    public List<BookDTO> getAllPublicBooks() {
-        List<Book> books = bookRepo.findByScopeIn(Arrays.asList(Book.Scope.ALLREAD, Book.Scope.ALLEDIT));
-//        List<Book> books = bookRepo.findByScope(Book.Scope.ALLREAD);
-//        books=bookRepo.findAll();
-        List<BookDTO> bookDTOs = new ArrayList<>();
-        for (Book book : books) {
-            bookDTOs.add(bookConverter.toDTO(book));
-        }
-        return bookDTOs;
+    @Override
+    public List<BookDTO> searchBooksByTitle(String title) {
+        List<Book> books=bookRepo.findByTitleContaining(title);
+        return bookConverter.toDTOs(books);
     }
-    
+
+
     @Override
     @CacheEvict(value = "books", key="'book:'+#id")
     public boolean deleteBookById(String token, Long id) throws IllegalArgumentException {

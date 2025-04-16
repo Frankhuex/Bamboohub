@@ -15,5 +15,8 @@ public interface ParagraphService {
     ParagraphDTO moveDownParagraphById(String token,Long id);
     BookDTO getBookByParaId(String token,Long paraId);
     List<ParagraphDTO> getAllParagraphs(String token);
+
+    List<ParagraphDTO> searchParagraphsByAny(String query);
+    List<ParagraphDTO> searchParagraphsByAny(String token, String query);
     
 }

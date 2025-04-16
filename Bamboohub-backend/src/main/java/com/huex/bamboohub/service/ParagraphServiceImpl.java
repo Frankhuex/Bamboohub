@@ -295,10 +295,29 @@ public class ParagraphServiceImpl implements ParagraphService {
         return paraConverter.toDTOs(paragraphs);
     }
 
+    @Override
+    public List<ParagraphDTO> searchParagraphsByAny(String query) {
+        List<Paragraph> paras=paraRepo.findByAuthorContainingOrContentContaining(query,query);
+        List<Paragraph> filteredParas=new ArrayList<>();
+        for (Paragraph para : paras) {
+            if (para.getBook().getScope()!=Book.Scope.PRIVATE) {
+                filteredParas.add(para);
+            }
+        }
+        return paraConverter.toDTOs(filteredParas);
+    }
 
-
-
-
+    @Override
+    public List<ParagraphDTO> searchParagraphsByAny(String token, String query) {
+        List<Paragraph> paras=paraRepo.findByAuthorContainingOrContentContaining(query,query);
+        List<Paragraph> filteredParas=new ArrayList<>();
+        for (Paragraph para : paras) {
+            if (para.getBook().getScope()!=Book.Scope.PRIVATE || roleUtil.canView(token,para.getBook())) {
+                filteredParas.add(para);
+            }
+        }
+        return paraConverter.toDTOs(filteredParas);
+    }
 
 
 

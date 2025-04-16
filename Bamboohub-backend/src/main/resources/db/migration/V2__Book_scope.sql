@@ -20,7 +20,7 @@ ALTER TABLE `role`
     MODIFY COLUMN `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 
--- 修正枚举字段并移除冗余索引
+
 CREATE TABLE `para_role` (
      `id` int NOT NULL AUTO_INCREMENT COMMENT 'Primary Key',
      `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create Time',
@@ -56,3 +56,26 @@ ALTER TABLE `book`
 
 ALTER TABLE `paragraph`
     MODIFY COLUMN `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+
+
+
+
+
+
+CREATE TABLE `follow` (
+                             `id` int NOT NULL AUTO_INCREMENT COMMENT 'Primary Key',
+                             `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create Time',
+                             `source_id` int NOT NULL,
+                             `target_id` int NOT NULL,
+                             PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 添加外键（自动创建索引）
+ALTER TABLE follow
+    ADD CONSTRAINT `follow_ibfk_1`
+        FOREIGN KEY (`source_id`) REFERENCES `user` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE follow
+    ADD CONSTRAINT `follow_ibfk_2`
+        FOREIGN KEY (`target_id`) REFERENCES `user` (`id`) ON DELETE CASCADE;
