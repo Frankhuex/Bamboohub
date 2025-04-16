@@ -41,7 +41,7 @@ public class Role {
         VIEWER,
         EDITOR,
         ADMIN,
-        OWNER
+        OWNER;
     }
 
     public Role() {}

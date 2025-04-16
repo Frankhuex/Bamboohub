@@ -1,4 +1,5 @@
 package com.huex.bamboohub.controller;
+import com.huex.bamboohub.dao.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,10 +43,21 @@ public class UserController {
         }
     }
 
-    @GetMapping("/myInfo")
+    @GetMapping("/myProfile")
     public Response<UserDTOWithToken> parseToken(@RequestHeader("Authorization") String token) {
         try {
-            return Response.newSuccess(userConverter.toDTOWithToken(jwtUtil.parseUser(token),token));
+            User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
+            
+            return Response.newSuccess(userConverter.toDTOWithToken(user,token));
+        } catch (Exception e) {
+            return newFail(e.getMessage());
+        }
+    }
+
+    @PutMapping("/myProfile/update")
+    public Response<UserDTO> updateInfo(@RequestHeader("Authorization") String token, @RequestBody UserUpdateReq userUpdateReq) {
+        try {
+            return Response.newSuccess(userService.updateProfile(token, userUpdateReq));
         } catch (Exception e) {
             return newFail(e.getMessage());
         }
@@ -56,6 +68,17 @@ public class UserController {
     public Response<UserDTOWithToken> changePwd(@RequestHeader("Authorization") String token, @RequestBody ChangePwdReq changePwdReq) {
         try {
             return Response.newSuccess(userService.changePwd(token, changePwdReq));
+        } catch (Exception e) {
+            return newFail(e.getMessage());
+        }
+    }
+
+
+
+    @GetMapping("/user/{userId}")
+    public Response<UserDTO> getUser(@PathVariable("userId") long userId) {
+        try {
+            return Response.newSuccess(userService.getUserById(userId));
         } catch (Exception e) {
             return newFail(e.getMessage());
         }
@@ -85,6 +108,15 @@ public class UserController {
     public Response<Boolean> unfollowUser(@RequestHeader("Authorization") String token, @PathVariable("userId") long userId) {
         try {
             return Response.newSuccess(userService.unfollowUser(token, userId));
+        } catch (Exception e) {
+            return newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("/whoIFollow")
+    public Response<List<UserDTO>> getWhoIFollow(@RequestHeader("Authorization") String token) {
+        try {
+            return Response.newSuccess(userService.getWhoIFollow(token));
         } catch (Exception e) {
             return newFail(e.getMessage());
         }

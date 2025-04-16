@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -32,25 +33,11 @@ public class ParagraphServiceImpl implements ParagraphService {
     @Autowired private ParaRoleRepo paraRoleRepo;
 
     @Override
+    @Cacheable(value="parasOfBook",key="'bookId:'+#bookId")
     public List<ParagraphDTO> getParagraphsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
-        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,book)) {
-            throw new IllegalArgumentException("No permission to get paragraphs.");
-        }
-        return getParagraphsByBookDAO(book);
-    }
-
-    //@Override
-    public List<ParagraphDTO> getParagraphsByBookTitle(String token,String bookTitle) throws IllegalArgumentException {
-        List<Book> books = bookRepo.findByTitle(bookTitle);
-        if (books.isEmpty()) {
-            throw new IllegalArgumentException("Book with title " + bookTitle + " not found.");
-        } else if (books.size() > 1) {
-            throw new IllegalArgumentException("More than one book with title " + bookTitle + " found.");
-        }
-        Book book=books.get(0);
-        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,book)) {
+        if (!roleUtil.generalCanViewParagraph(token,book)) {
             throw new IllegalArgumentException("No permission to get paragraphs.");
         }
         return getParagraphsByBookDAO(book);
@@ -61,7 +48,7 @@ public class ParagraphServiceImpl implements ParagraphService {
     public List<Long> getParaIdsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
-        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,book)) {
+        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.hasRoleCanView(token,book)) {
             throw new IllegalArgumentException("No permission to get paragraph ids.");
         }
         return getParaIdsByBookDAO(book);
@@ -71,6 +58,8 @@ public class ParagraphServiceImpl implements ParagraphService {
 
     @Override
     public ParagraphDTO addNewParagraph(String token, ParagraphReq paraReq) throws IllegalArgumentException {
+        User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
+
         // Check if previous paragraph exists
         Long prevParaId=paraReq.getPrevParaId();
         Paragraph prevPara=paraRepo.findById(prevParaId)
@@ -88,7 +77,7 @@ public class ParagraphServiceImpl implements ParagraphService {
         // Check if having permission to add new paragraph
         Book book=prevPara.getBook();
         Long bookId=book.getId();
-        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book)) {
+        if (!roleUtil.generalCanEditParagraph(user,book)) {
             throw new IllegalArgumentException("No permission to add new paragraph.");
         }
 
@@ -97,16 +86,17 @@ public class ParagraphServiceImpl implements ParagraphService {
         Long thisId=para.getId();
 
         List<ParagraphDTO> savedParas=connectParas(new Paragraph[]{prevPara,para,nextPara});
+        
 
         ParaRole paraRole=new ParaRole(
-                jwtUtil.parseUser(token),
+                user,
                 para,
                 ParaRole.RoleType.CREATOR
         );
         paraRoleRepo.save(paraRole);
 
         evictCacheParas(new Long[]{prevParaId,thisId,nextParaId});
-        evictCacheParaIds(bookId);
+        evictCacheParasOfBook(bookId);
         return savedParas.get(1);
     }
 
@@ -119,7 +109,7 @@ public class ParagraphServiceImpl implements ParagraphService {
         // Check if having permission to delete paragraph
         Book book=paragraph.getBook();
         Long bookId=book.getId();
-        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book)) {
+        if (!roleUtil.generalCanEditParagraph(token,book)) {
             throw new IllegalArgumentException("No permission to delete paragraph.");
         }
 
@@ -144,7 +134,7 @@ public class ParagraphServiceImpl implements ParagraphService {
         paraRepo.delete(paragraph);
 
         evictCacheParas(new Long[]{id,prevParaId,nextParaId});
-        evictCacheParaIds(bookId);
+        evictCacheParasOfBook(bookId);
         paraRepo.delete(paragraph);
         return true;
     }
@@ -154,7 +144,7 @@ public class ParagraphServiceImpl implements ParagraphService {
     public ParagraphDTO getParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
-        if (paragraph.getBook().getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,paragraph.getBook())) {
+        if (!roleUtil.generalCanViewParagraph(token,paragraph)) {
             throw new IllegalArgumentException("No permission to get paragraph.");
         }
         return paraConverter.toDTO(paragraph);
@@ -162,12 +152,12 @@ public class ParagraphServiceImpl implements ParagraphService {
 
     @Override
     @Transactional
-    @CachePut(value = "paragraphs", key = "'para:' + #id", unless = "#result == null")
+    @CacheEvict(value = "paragraphs", key = "'para:' + #id")
     public ParagraphDTO updateParagraphById(String token, Long id, ParagraphUpdateReq paraUpdReq) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
         Book book=paragraph.getBook();
-        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book)) {
+        if (!roleUtil.generalCanEditParagraph(token,book)) {
             throw new IllegalArgumentException("No permission to update paragraph.");
         }
         String author=paraUpdReq.getAuthor();
@@ -179,19 +169,23 @@ public class ParagraphServiceImpl implements ParagraphService {
             paragraph.setContent(content);
         }
         Paragraph updatedParagraph = paraRepo.save(paragraph);
+        
+        User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
 
-        ParaRole paraRole=new ParaRole(
-                jwtUtil.parseUser(token),
-                updatedParagraph,
-                ParaRole.RoleType.CONTRIBUTOR
-        );
 
-        paraRoleRepo.save(paraRole);
+        if (!paraRoleRepo.existsByUserAndParagraph(user,updatedParagraph)) {
+            ParaRole paraRole = new ParaRole(
+                    user,
+                    updatedParagraph,
+                    ParaRole.RoleType.CONTRIBUTOR
+            );
+
+            paraRoleRepo.save(paraRole);
+        }
         return paraConverter.toDTO(updatedParagraph);
     }
 
     @Override
-    @CachePut(value = "paragraphs", key = "'para:' + #id", unless = "#result == null")
     public ParagraphDTO moveUpParagraphById(String token, Long id) throws IllegalArgumentException {
         // Check if paragraph exists
         Paragraph paragraph = paraRepo.findById(id)
@@ -200,7 +194,7 @@ public class ParagraphServiceImpl implements ParagraphService {
         Long bookId=book.getId();
 
         // Check if having permission to move paragraph up
-        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book)) {
+        if (!roleUtil.generalCanEditParagraph(token,book)) {
             throw new IllegalArgumentException("No permission to move paragraph up.");
         }
 
@@ -229,13 +223,12 @@ public class ParagraphServiceImpl implements ParagraphService {
         List<ParagraphDTO> savedParas=connectParas(new Paragraph[]{prevprevPara,paragraph,prevPara,nextPara});
 
         evictCacheParas(new Long[]{prevprevId,prevId,id,nextId});
-        evictCacheParaIds(bookId);
+        evictCacheParasOfBook(bookId);
 
         return savedParas.get(1);
     }
 
     @Override
-    @CachePut(value = "paragraphs", key = "'para:' + #id", unless = "#result == null")
     public ParagraphDTO moveDownParagraphById(String token, Long id) throws IllegalArgumentException {
         // Check if paragraph exists
         Paragraph paragraph = paraRepo.findById(id)
@@ -244,7 +237,7 @@ public class ParagraphServiceImpl implements ParagraphService {
         Long bookId=book.getId();
 
         // Check if having permission to move paragraph down
-        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book)) {
+        if (!roleUtil.generalCanEditParagraph(token,book)) {
             throw new IllegalArgumentException("No permission to move paragraph down.");
         }
 
@@ -273,7 +266,7 @@ public class ParagraphServiceImpl implements ParagraphService {
         List<ParagraphDTO> savedParas=connectParas(new Paragraph[]{prevPara,nextPara,paragraph,nextnextPara});
 
         evictCacheParas(new Long[]{prevId,id,nextId,nextnextId});
-        evictCacheParaIds(bookId);
+        evictCacheParasOfBook(bookId);
 
         return savedParas.get(2);
     }
@@ -283,36 +276,27 @@ public class ParagraphServiceImpl implements ParagraphService {
         Paragraph paragraph = paraRepo.findById(paraId)
             .orElseThrow(() -> new IllegalArgumentException("Paragraph with id "+paraId+" not found."));
         Book book = paragraph.getBook();
-        if (!roleUtil.canView(token,book)) {
+        if (!roleUtil.generalCanViewParagraph(token,book)){
             throw new IllegalArgumentException("No permission to get book.");
         }
         return bookConverter.toDTO(book);
     }
 
     @Override
+    // Secret
     public List<ParagraphDTO> getAllParagraphs(String token) {
         List<Paragraph> paragraphs = paraRepo.findAll();
         return paraConverter.toDTOs(paragraphs);
     }
 
-    @Override
-    public List<ParagraphDTO> searchParagraphsByAny(String query) {
-        List<Paragraph> paras=paraRepo.findByAuthorContainingOrContentContaining(query,query);
-        List<Paragraph> filteredParas=new ArrayList<>();
-        for (Paragraph para : paras) {
-            if (para.getBook().getScope()!=Book.Scope.PRIVATE) {
-                filteredParas.add(para);
-            }
-        }
-        return paraConverter.toDTOs(filteredParas);
-    }
 
     @Override
     public List<ParagraphDTO> searchParagraphsByAny(String token, String query) {
         List<Paragraph> paras=paraRepo.findByAuthorContainingOrContentContaining(query,query);
         List<Paragraph> filteredParas=new ArrayList<>();
         for (Paragraph para : paras) {
-            if (para.getBook().getScope()!=Book.Scope.PRIVATE || roleUtil.canView(token,para.getBook())) {
+            if (roleUtil.generalCanSearchParagraph(token,para))
+            {
                 filteredParas.add(para);
             }
         }
@@ -385,10 +369,14 @@ public class ParagraphServiceImpl implements ParagraphService {
         }
     }
 
-    private void evictCacheParaIds(Long bookId) {
+    private void evictCacheParasOfBook(Long bookId) {
         Cache cacheParaIds = cacheManager.getCache("paraIdsOfBook");
         if (cacheParaIds != null) {
             cacheParaIds.evict("bookId:"+bookId);
+        }
+        Cache parasOfBook = cacheManager.getCache("parasOfBook");
+        if (parasOfBook != null) {
+            parasOfBook.evict("bookId:"+bookId);
         }
     }
 }

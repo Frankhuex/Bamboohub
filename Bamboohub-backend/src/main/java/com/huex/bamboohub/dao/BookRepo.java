@@ -9,5 +9,7 @@ public interface BookRepo extends JpaRepository<Book, Long> {
     List<Book> findByTitle(String title);
     List<Book> findByScope(Book.Scope scope);
     List<Book> findByScopeIn(List<Book.Scope> scopes);
+    List<Book> findByTitleContainingAndScopeNot(String title,Book.Scope scope);
     List<Book> findByTitleContaining(String title);
+    List<Book> findByScopeNot(Book.Scope scope);
 }

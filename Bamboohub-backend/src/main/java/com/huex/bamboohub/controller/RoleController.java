@@ -61,4 +61,13 @@ public class RoleController {
         }
     }
 
+    @PutMapping("/book/{bookId}/changeOwner/{targetId}")
+    public Response<RolesDTO> changeOwner(@RequestHeader("Authorization") String token, @PathVariable Long bookId, @PathVariable Long targetId) {
+        try {
+            return Response.newSuccess(roleService.changeOwner(token, bookId, targetId));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
 }

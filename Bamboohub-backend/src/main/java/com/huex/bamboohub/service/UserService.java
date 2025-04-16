@@ -9,8 +9,12 @@ public interface UserService {
     UserDTOWithToken login(LoginReq loginReq);
     UserDTOWithToken changePwd(String token, ChangePwdReq changePwdReq);
 
+    UserDTO updateProfile(String token, UserUpdateReq userUpdateReq);
 
+
+    UserDTO getUserById(Long id);
     List<UserDTO> searchUsersByAny(String query);
     FollowDTO followUser(String token, Long targetId);
     boolean unfollowUser(String token, Long targetId);
+    List<UserDTO> getWhoIFollow(String token);
 }

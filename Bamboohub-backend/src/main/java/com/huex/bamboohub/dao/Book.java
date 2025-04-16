@@ -42,7 +42,7 @@ public class Book {
 //    @Column(name="is_public")
 //    private boolean isPublic;
 
-    public enum Scope {ALLEDIT,ALLREAD,PRIVATE}
+    public enum Scope {ALLEDIT,ALLREAD,ALLSEARCH,PRIVATE}
     @Enumerated(EnumType.STRING)
     @Column(name="scope")
     private Scope scope;

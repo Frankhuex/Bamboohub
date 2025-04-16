@@ -20,42 +20,6 @@ public class BookController {
     @Autowired
     private BookService bookService;
 
-
-
-
-//    @Autowired private ParagraphRepo paragraphRepo;
-//    @Autowired private BookRepo bookRepo;
-//    @PostMapping("/books/add-end-para")
-//    public Response<List<Long>> addEndPara() {
-//        try {
-//            List<Book> books=bookRepo.findAll();
-//            List<Long> endParaIds=new ArrayList<>();
-//            for (Book book:books) {
-//                Paragraph paragraph=book.getStartPara();
-//                while (paragraph.getNextParaId()!=null) {
-//                    paragraph=paragraphRepo.findById(paragraph.getNextParaId()).get();
-//                }
-//                Paragraph endPara=new Paragraph(
-//                        book,
-//                        "System",
-//                        "End of the book"+book.getId(),
-//                        paragraph.getId(),
-//                        null
-//                );
-//                Paragraph savedEndPara=paragraphRepo.save(endPara);
-//                paragraph.setNextParaId(savedEndPara.getId());
-//                paragraphRepo.save(paragraph);
-//                book.setEndPara(endPara);
-//                bookRepo.save(book);
-//                endParaIds.add(savedEndPara.getId());
-//            }
-//            return Response.newSuccess(endParaIds);
-//        } catch (Exception e) {
-//            return Response.newFail(e.getMessage());
-//        }
-//    }
-
-
     @PostMapping("/book")
     public Response<BookDTO> addNewBook(@RequestHeader("Authorization") String token, @RequestBody BookReq bookReq) {
         try { 
@@ -66,7 +30,7 @@ public class BookController {
     }
 
     @GetMapping("/book/{id}")
-    public Response<BookDTO> getBookById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id) {
+    public Response<BookDTO> getBookById(@RequestHeader(value="Authorization",required=false) String token, @PathVariable("id") Long id) {
         try { 
             return Response.newSuccess(bookService.getBookById(token,id));
         } catch (Exception e) { 
@@ -75,9 +39,9 @@ public class BookController {
     }
 
     @GetMapping("books/search")
-    public Response<List<BookDTO>> searchBooksByTitle(@RequestParam("title") String title) {
+    public Response<List<BookDTO>> searchBooksByTitle(@RequestHeader(value="Authorization",required=false) String token, @RequestParam("title") String title) {
         try {
-            return Response.newSuccess(bookService.searchBooksByTitle(title));
+            return Response.newSuccess(bookService.searchBooksByTitle(token,title));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }
@@ -85,7 +49,14 @@ public class BookController {
 
 
 
-
+    @GetMapping("books")
+    public Response<List<BookDTO>> getAllNonPrivateBooks() {
+        try {
+            return Response.newSuccess(bookService.getNonPrivateBooks());
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
 
     @GetMapping("books/alledit")
     public Response<List<BookDTO>> getAllEditableBooks() {

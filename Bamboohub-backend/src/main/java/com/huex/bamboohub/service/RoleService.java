@@ -16,4 +16,5 @@ public interface RoleService {
     RolesDTO getRolesByBookId(String token, Long bookId);
     RoleType getOwnRoleByBookId(String token, Long bookId);
     Role putRoleWithoutToken(User user, Book book, RoleType roleType);
+    RolesDTO changeOwner(String token, Long bookId, Long targetId);
 }

@@ -4,6 +4,7 @@ import com.huex.bamboohub.dao.*;
 import com.huex.bamboohub.dto.ParaRoleDTO;
 import com.huex.bamboohub.dto.ParaRolesDTO;
 import com.huex.bamboohub.request.ParaRoleReq;
+import com.huex.bamboohub.util.JwtUtil;
 import com.huex.bamboohub.util.RoleUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -22,6 +23,7 @@ public class ParaRoleServiceImpl implements ParaRoleService {
     @Autowired private RoleUtil roleUtil;
     @Autowired private ParaRoleConverter paraRoleConverter;
     @Autowired private CacheManager cacheManager;
+    @Autowired private JwtUtil jwtUtil;
 
 
     @Override
@@ -32,7 +34,7 @@ public class ParaRoleServiceImpl implements ParaRoleService {
         Book book=paragraph.getBook();
 
         // Only OWNER and ADMIN can put paragraph role
-        if (!roleUtil.canAdmin(token, book)) {
+        if (!roleUtil.hasRoleCanAdmin(token, book)) {
             throw new IllegalArgumentException("User not authorized to put paragraph role");
         }
         ParaRole paraRole=paraRoleConverter.toDAO(paraRoleReq);
@@ -45,7 +47,10 @@ public class ParaRoleServiceImpl implements ParaRoleService {
         ParaRole role=paraRoleRepo.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found"));
         Book book=role.getParagraph().getBook();
-        if (!roleUtil.canAdmin(token, book)) {
+        User user=jwtUtil.parseUser(token).orElseThrow(() -> new IllegalArgumentException("Invalid token"));
+        // Only OWNER and ADMIN can delete paragraph role
+        // Notice that you cannot delete yourself. It's not BookRole
+        if (!roleUtil.hasRoleCanAdmin(token, book)) {
             throw new IllegalArgumentException("User not authorized to put paragraph role");
         }
         paraRoleRepo.deleteById(roleId);
@@ -59,7 +64,8 @@ public class ParaRoleServiceImpl implements ParaRoleService {
         ParaRole role=paraRoleRepo.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found"));
         Book book=role.getParagraph().getBook();
-        if (!roleUtil.canAdmin(token, book)) {
+        // Only OWNER and ADMIN can do this
+        if (!roleUtil.hasRoleCanAdmin(token, book)) {
             throw new IllegalArgumentException("User not authorized to put paragraph role");
         }
         role.setRoleType(newType);
@@ -74,8 +80,7 @@ public class ParaRoleServiceImpl implements ParaRoleService {
     public ParaRolesDTO getParaRolesByParaId(String token, Long paraId) {
         Paragraph paragraph=paragraphRepo.findById(paraId)
                 .orElseThrow(() -> new IllegalArgumentException("Paragraph not found"));
-        Book book=paragraph.getBook();
-        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,book)) {
+        if (!roleUtil.generalCanViewParagraph(token,paragraph)) {
             throw new IllegalArgumentException("No permission to access paragraph");
         }
         List<ParaRole> paraRoles=paraRoleRepo.findByParagraph(paragraph);
