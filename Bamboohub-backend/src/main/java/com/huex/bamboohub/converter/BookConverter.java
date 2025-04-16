@@ -7,6 +7,9 @@ import com.huex.bamboohub.dao.*;
 import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.request.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 public class BookConverter {
 
@@ -16,8 +19,15 @@ public class BookConverter {
                 book.getCreateTime(),
                 book.getTitle(),
                 book.getStartPara().getId(),
+                book.getEndPara().getId(),
                 book.getScope()
         );
+    }
+
+    public List<BookDTO> toDTOs(List<Book> books) {
+        return books.stream()
+               .map(this::toDTO)
+               .collect(Collectors.toList());
     }
 
     public Book toDAO(BookReq bookReq) {
@@ -31,4 +41,5 @@ public class BookConverter {
                 bookReq.getScope()
         );
     }
+
 }

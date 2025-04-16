@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.util.Date;
-import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,6 +22,7 @@ public class BookServiceTest {
     @Mock private BookConverter bookConverter;
     @Mock private JwtUtil jwtUtil;
     @Mock private RoleUtil roleUtil;
+    @Mock private RoleService roleService;
 
     @Test
     public void testAddNewBook() {
@@ -39,7 +38,7 @@ public class BookServiceTest {
         when(jwtUtil.parseUser(anyString())).thenReturn(mockUser);
 
         Role mockRole = new Role();
-        when(roleUtil.putRole(any(), any(), any())).thenReturn(mockRole);
+        when(roleService.putRoleWithoutToken(any(), any(),any())).thenReturn(mockRole);
 
         // 1. 创建 BookReq 对象
         BookReq bookReq=new BookReq(
@@ -48,13 +47,13 @@ public class BookServiceTest {
         );
 
         // 2. 执行测试
-        Long bookId = bookService.addNewBook(anyString(), bookReq);
+        Long bookId=bookService.addNewBook(anyString(), bookReq).getId();
 
         // 3. 验证结果
         verify(bookConverter, times(1)).toDAO(any(BookReq.class));
         verify(bookRepo, times(2)).save(any(Book.class));
         verify(paraRepo, times(2)).save(any(Paragraph.class));
-        verify(roleUtil, times(1)).putRole(any(), any(), any());
+        verify(roleService, times(1)).putRoleWithoutToken(any(), any(), any());
         verify(jwtUtil, times(1)).parseUser(anyString());
         assertEquals(mockBook.getId(), bookId);
     }

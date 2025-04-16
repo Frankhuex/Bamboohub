@@ -14,10 +14,7 @@ import com.huex.bamboohub.converter.*;
 public class UserServiceImpl implements UserService {
     @Autowired private UserConverter userConverter;
     @Autowired private PasswordUtil passwordUtil;
-    @Autowired private RoleRepo roleRepo;
     @Autowired private UserRepo userRepo;
-    @Autowired private BookRepo bookRepo;
-    @Autowired private RoleUtil roleUtil;
     @Autowired private JwtUtil jwtUtil;
 
 

@@ -4,9 +4,13 @@ import jakarta.persistence.*;
 import static jakarta.persistence.GenerationType.IDENTITY;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter @Setter
 @Entity
@@ -18,7 +22,7 @@ public class Paragraph {
     private Long id;
 
     @Column(name="create_time")
-    @CreatedDate
+    @CreationTimestamp
     private Date createTime;
 
     @ManyToOne
@@ -36,6 +40,9 @@ public class Paragraph {
 
     @Column(name="next_para_id",nullable=true)
     private Long nextParaId;
+
+    @OneToMany(mappedBy="paragraph",cascade=CascadeType.ALL,orphanRemoval=true)
+    private List<ParaRole> paraRoles=new ArrayList<>();
 
     public Paragraph() {}
     public Paragraph(Book book, String author, String content, Long prevParaId, Long nextParaId) {

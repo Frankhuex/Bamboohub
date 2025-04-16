@@ -1,12 +1,16 @@
 package com.huex.bamboohub.dao;
 
 import java.io.Serializable;
+import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
@@ -21,7 +25,7 @@ public class Book {
     private Long id;
 
     @Column(name="create_time")
-    @CreatedDate
+    @CreationTimestamp
     private Date createTime;
 
     @Column(name="title")
@@ -30,6 +34,10 @@ public class Book {
     @OneToOne
     @JoinColumn(name="start_para_id",nullable=true)
     private Paragraph startPara; //Blank paragraph created on book creation
+
+    @OneToOne
+    @JoinColumn(name="end_para_id",nullable=true)
+    private Paragraph endPara;
 
 //    @Column(name="is_public")
 //    private boolean isPublic;

@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.dao.*;
@@ -17,27 +16,17 @@ import com.huex.bamboohub.util.*;
 @Service
 @CacheConfig(cacheNames = "books")
 public class BookServiceImpl implements BookService {
-    @Autowired
-    private BookRepo bookRepo;
-
-    @Autowired
-    private ParagraphRepo paraRepo;
-
-    @Autowired
-    private RoleRepo roleRepo;
-
-    @Autowired
-    private BookConverter bookConverter;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private RoleUtil roleUtil;
+    @Autowired private BookRepo bookRepo;
+    @Autowired private ParagraphRepo paraRepo;
+    @Autowired private RoleRepo roleRepo;
+    @Autowired private BookConverter bookConverter;
+    @Autowired private JwtUtil jwtUtil;
+    @Autowired private RoleUtil roleUtil;
+    @Autowired private RoleService roleService;
 
     @Override
     @CacheEvict(value = "books", allEntries = true)
-    public Long addNewBook(String token, BookReq bookReq) throws IllegalArgumentException {
+    public BookDTO addNewBook(String token, BookReq bookReq) throws IllegalArgumentException {
 //        List<Book> books = bookRepo.findByTitle(bookReq.getTitle());
 //        if (!CollectionUtils.isEmpty(books)) {
 //            throw new IllegalArgumentException("Book title "+bookReq.getTitle()+" already exists.");
@@ -55,9 +44,9 @@ public class BookServiceImpl implements BookService {
         bookRepo.save(savedBook);
 
         User owner=jwtUtil.parseUser(token);
-        roleUtil.putRole(owner, savedBook, Role.RoleType.OWNER);
-        Long savedId=savedBook.getId();
-        return savedBook.getId();
+        roleService.putRoleWithoutToken(owner, savedBook, Role.RoleType.OWNER);
+
+        return bookConverter.toDTO(savedBook);
     }
 
     @Override
@@ -65,14 +54,14 @@ public class BookServiceImpl implements BookService {
     public BookDTO getBookById(String token, Long id) throws IllegalArgumentException {
         Book book = bookRepo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Book with id "+id+" not found."));
-        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,id)) { 
+        if (book.getScope()==Book.Scope.PRIVATE && !roleUtil.canView(token,book)) {
             throw new IllegalArgumentException("No permission to access book.");
         }
         System.out.println(book);
         return bookConverter.toDTO(book);
     }
 
-    @Override
+    //@Override
     public List<Long> getAllPrivateBookIds(String token) {
         List<Role> roles=roleRepo.findByUser(jwtUtil.parseUser(token));
         List<Long> bookIds = new ArrayList<>();
@@ -82,7 +71,7 @@ public class BookServiceImpl implements BookService {
         return bookIds;
     }
 
-    @Override
+    //@Override
     public List<Long> getAllPublicBookIds() {
         List<Book> books = bookRepo.findByScopeIn(Arrays.asList(Book.Scope.ALLREAD, Book.Scope.ALLEDIT));
         List<Long> bookIds = new ArrayList<>();
@@ -92,8 +81,8 @@ public class BookServiceImpl implements BookService {
         return bookIds;
     }
 
-    @Override
-    public List<BookDTO> getAllPrivateBooks(String token) {
+    //@Override
+    public List<BookDTO> getMyBooks(String token) {
         List<Role> roles=roleRepo.findByUser(jwtUtil.parseUser(token));
         List<BookDTO> bookDTOs = new ArrayList<>();
         for (Role role : roles) {
@@ -103,6 +92,20 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    public List<BookDTO> getBooksByScope(String token, Book.Scope scope) {
+        if (scope==Book.Scope.PRIVATE) {
+            List<BookDTO> privateBookDTOs = new ArrayList<>();
+            for (BookDTO bookDTO : getMyBooks(token)) {
+                if (bookDTO.getScope()==Book.Scope.PRIVATE) {
+                    privateBookDTOs.add(bookDTO);
+                }
+            }
+            return privateBookDTOs;
+        }
+        return bookConverter.toDTOs(bookRepo.findByScope(scope));
+    }
+
+    //@Override
     public List<BookDTO> getAllPublicBooks() {
         List<Book> books = bookRepo.findByScopeIn(Arrays.asList(Book.Scope.ALLREAD, Book.Scope.ALLEDIT));
 //        List<Book> books = bookRepo.findByScope(Book.Scope.ALLREAD);
@@ -116,19 +119,21 @@ public class BookServiceImpl implements BookService {
     
     @Override
     @CacheEvict(value = "books", key="'book:'+#id")
-    public void deleteBookById(String token, Long id) throws IllegalArgumentException {
+    public boolean deleteBookById(String token, Long id) throws IllegalArgumentException {
+
         Book book=bookRepo.findById(id)
-            .orElseThrow(()-> new IllegalArgumentException("No permission to delete book."));
-        if (!roleUtil.isOwner(token,id)) {
+                .orElseThrow(()-> new IllegalArgumentException("Book with id "+id+" not found."));
+        if (!roleUtil.isOwner(token,book)) {
             throw new IllegalArgumentException("No permission to delete book.");
         }
 //        List<Role> roles=roleRepo.findByBook(book);
-        System.out.println("to delete book");
+//        System.out.println("to delete book");
         bookRepo.deleteById(id);
-        System.out.println("deleted book");
+//        System.out.println("deleted book");
         // for (Role role : roles) {
         //     roleRepo.deleteById(role.getId());
         // }
+        return true;
     }
 
     @Override
@@ -136,7 +141,7 @@ public class BookServiceImpl implements BookService {
     public BookDTO updateBookById(String token, Long id, BookUpdateReq bookUpdReq) throws IllegalArgumentException {
         Book book = bookRepo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Book with id "+id+" not found."));
-        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,id)) {
+        if (book.getScope()!=Book.Scope.ALLEDIT && !roleUtil.canEdit(token,book)) {
             throw new IllegalArgumentException("No permission to update book.");
         }
         book.setTitle(bookUpdReq.getTitle());

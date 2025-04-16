@@ -5,8 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter @AllArgsConstructor
-public class RoleReq {
+public class ParaRoleReq {
     private Long userId;
-    private Long bookId;
-    private Role.RoleType roleType;
+    private Long paraId;
+    private ParaRole.RoleType roleType;
 }

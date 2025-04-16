@@ -5,10 +5,10 @@ import java.util.List;
 
 public interface ParagraphService {
     List<ParagraphDTO> getParagraphsByBookId(String token,Long bookId);
-    List<ParagraphDTO> getParagraphsByBookTitle(String token,String bookTitle);
+    //List<ParagraphDTO> getParagraphsByBookTitle(String token,String bookTitle);
     List<Long> getParaIdsByBookId(String token,Long bookId);
-    Long addNewParagraph(String token, ParagraphReq paraReq);
-    void deleteParagraphById(String token,Long id);
+    ParagraphDTO addNewParagraph(String token, ParagraphReq paraReq);
+    boolean deleteParagraphById(String token,Long id);
     ParagraphDTO getParagraphById(String token,Long id);
     ParagraphDTO updateParagraphById(String token, Long id, ParagraphUpdateReq paraUpdReq);
     ParagraphDTO moveUpParagraphById(String token,Long id);

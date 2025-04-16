@@ -3,10 +3,16 @@ package com.huex.bamboohub.util;
 import io.jsonwebtoken.*;
 
 import java.time.Instant;
+import java.util.Date;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.UUID;
-
+import java.util.Date;
+import java.time.LocalDateTime;
 import com.huex.bamboohub.dao.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +58,7 @@ public class JwtUtil {
         String uuid=claims.getId();
         String subject=claims.getSubject();
         Date expiration=claims.getExpiration();
-        System.out.println("Expiration date: "+expiration);
+        System.out.println("Expiration Date: "+expiration);
         return claims;
     }
 

@@ -1,9 +1,10 @@
 package com.huex.bamboohub.util;
+import com.huex.bamboohub.converter.RoleConverter;
 import com.huex.bamboohub.converter.UserConverter;
 import com.huex.bamboohub.dao.*;
 
+import com.huex.bamboohub.dto.RoleDTO;
 import com.huex.bamboohub.dto.RolesDTO;
-import com.huex.bamboohub.dto.UserSimpleDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
@@ -29,45 +30,13 @@ public class RoleUtil {
     @Autowired
     private UserConverter userConverter;
 
-    @Cacheable(value="rolesOfBook",key="'bookId:'+#book.getId()")
-    public RolesDTO getRolesByBookIdWithoutToken(Book book) throws IllegalArgumentException {
-        List<Role> roles=roleRepo.findByBook(book);
-        UserSimpleDTO owner=new UserSimpleDTO(null,null,null);
-        List<UserSimpleDTO> admins=new ArrayList<>();
-        List<UserSimpleDTO> editors=new ArrayList<>();
-        List<UserSimpleDTO> viewers=new ArrayList<>();
-        for (Role role : roles) {
-            RoleType roleType=role.getRoleType();
-            if (roleType==RoleType.OWNER) {
-                owner=userConverter.toSimpleDTO(role.getUser());
-            } else if (roleType==RoleType.ADMIN) {
-                admins.add(userConverter.toSimpleDTO(role.getUser()));
-            } else if (roleType==RoleType.EDITOR) {
-                editors.add(userConverter.toSimpleDTO(role.getUser()));
-            } else if (roleType==RoleType.VIEWER) {
-                viewers.add(userConverter.toSimpleDTO(role.getUser()));
-            }
-        }
-        return new RolesDTO(owner, admins, editors, viewers);
-    }
+    @Autowired
+    private RoleConverter roleConverter;
 
-    public Role putRole(User user, Book book, RoleType roleType) {
-        // 查找现有的角色并更新，找不到则创建新角色
-        Role role = roleRepo.findByUserAndBook(user, book)
-            .map(existingRole -> {
-                existingRole.setRoleType(roleType);
-                return existingRole;
-            })
-            .orElseGet(() -> new Role(user, book, roleType));
 
-        // 保存角色并返回
-        return roleRepo.save(role);
-    }
 
-    public RoleType getRoleType(Long userId, Long bookId) {
+    public RoleType getRoleType(User user, Book book) {
         try {
-            User user = userRepo.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user id"));
-            Book book = bookRepo.findById(bookId).orElseThrow(() -> new IllegalArgumentException("Invalid book id"));
             Role role = roleRepo.findByUserAndBook(user, book).orElseThrow(() -> new IllegalArgumentException("User does not have role in book"));
             return role.getRoleType();
         } catch (Exception e) {
@@ -75,47 +44,41 @@ public class RoleUtil {
         }
     }
 
-    public boolean isRole(Long userId, Long bookId, RoleType roleType) {
+    public boolean isRole(User user, Book book, RoleType roleType) {
         try {
-            User user = userRepo.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user id"));
-            Book book = bookRepo.findById(bookId).orElseThrow(() -> new IllegalArgumentException("Invalid book id"));
             Role role = roleRepo.findByUserAndBook(user, book).orElseThrow(() -> new IllegalArgumentException("User does not have role in book"));
-            return role.getRoleType() == roleType;
+            return role.getRoleType()==roleType;
         } catch (Exception e) {
             return false;
         }
     }
 
-    public boolean isOwner(Long userId, Long bookId) {
-        return isRole(userId, bookId, RoleType.OWNER);
+    public boolean isOwner(User user, Book book) {
+        return isRole(user, book, RoleType.OWNER);
     }
 
-    public boolean isAdmin(Long userId, Long bookId) {
-        return isRole(userId, bookId, RoleType.ADMIN);
+    public boolean isAdmin(User user, Book book) {
+        return isRole(user, book, RoleType.ADMIN);
     }
 
-    public boolean isEditor(Long userId, Long bookId) {
-        return isRole(userId, bookId, RoleType.EDITOR);
+    public boolean isEditor(User user, Book book) {
+        return isRole(user, book, RoleType.EDITOR);
     }
 
-    public boolean isViewer(Long userId, Long bookId) {
-        return isRole(userId, bookId, RoleType.VIEWER);
+    public boolean isViewer(User user, Book book) {
+        return isRole(user, book, RoleType.VIEWER);
     }
 
-    public boolean hasAnyRole(Long userId, Long bookId) {
+    public boolean hasAnyRole(User user, Book book) {
         try {
-            User user = userRepo.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user id"));
-            Book book = bookRepo.findById(bookId).orElseThrow(() -> new IllegalArgumentException("Invalid book id"));
             return roleRepo.existsByUserAndBook(user, book);
         } catch (Exception e) {
             return false;
         }
     }
 
-    public boolean hasRoleButNot(Long userId, Long bookId, RoleType roleType) {
+    public boolean hasRoleButNot(User user, Book book, RoleType roleType) {
         try {
-            User user = userRepo.findById(userId).orElseThrow(() -> new IllegalArgumentException("Invalid user id"));
-            Book book = bookRepo.findById(bookId).orElseThrow(() -> new IllegalArgumentException("Invalid book id"));
             Role role = roleRepo.findByUserAndBook(user, book).orElseThrow(() -> new IllegalArgumentException("User does not have role in book"));
             return role.getRoleType()!= roleType;
         } catch (Exception e) {
@@ -123,70 +86,70 @@ public class RoleUtil {
         }
     }
 
-    public boolean canView(Long userId, Long bookId) {
-        return hasAnyRole(userId, bookId);
+    public boolean canView(User user, Book book) {
+        return hasAnyRole(user, book);
     }
 
-    public boolean canEdit(Long userId, Long bookId) {
-        return hasRoleButNot(userId, bookId, RoleType.VIEWER);
+    public boolean canEdit(User user, Book book) {
+        return hasRoleButNot(user, book, RoleType.VIEWER);
     }
 
-    public boolean canAdmin(Long userId, Long bookId) {
-        return isRole(userId, bookId, RoleType.ADMIN) || isRole(userId, bookId, RoleType.OWNER);
+    public boolean canAdmin(User user, Book book) {
+        return isRole(user, book, RoleType.ADMIN) || isRole(user, book, RoleType.OWNER);
     }
 
-    public boolean isEditorOrViewer(Long userId, Long bookId) {
-        return isEditor(userId, bookId) || isViewer(userId, bookId);
+    public boolean isEditorOrViewer(User user, Book book) {
+        return isEditor(user, book) || isViewer(user, book);
     }
 
 
 
-    public RoleType getRoleType(String token, Long bookId) {
-        return getRoleType(jwtUtil.parseUserId(token), bookId);
+    public RoleType getRoleType(String token, Book book) {
+        return getRoleType(jwtUtil.parseUser(token), book);
     }
 
-    public boolean isRole(String token, Long bookId, RoleType roleType) {
-        return isRole(jwtUtil.parseUserId(token), bookId, roleType);
+    public boolean isRole(String token, Book book, RoleType roleType) {
+        return isRole(jwtUtil.parseUser(token), book, roleType);
     }
 
-    public boolean isOwner(String token, Long bookId) {
-        return isOwner(jwtUtil.parseUserId(token), bookId);
+    public boolean isOwner(String token, Book book) {
+        return isOwner(jwtUtil.parseUser(token), book);
     }
 
-    public boolean isAdmin(String token, Long bookId) {
-        return isAdmin(jwtUtil.parseUserId(token), bookId);
+    public boolean isAdmin(String token, Book book) {
+        return isAdmin(jwtUtil.parseUser(token), book);
     }
 
-    public boolean isEditor(String token, Long bookId) {
-        return isEditor(jwtUtil.parseUserId(token), bookId);
+    public boolean isEditor(String token, Book book) {
+        return isEditor(jwtUtil.parseUser(token), book);
     }
 
-    public boolean isViewer(String token, Long bookId) {
-        return isViewer(jwtUtil.parseUserId(token), bookId);
+    public boolean isViewer(String token, Book book) {
+        return isViewer(jwtUtil.parseUser(token), book);
     }
 
-    public boolean hasAnyRole(String token, Long bookId) {
-        return hasAnyRole(jwtUtil.parseUserId(token), bookId);
+    public boolean hasAnyRole(String token, Book book) {
+        return hasAnyRole(jwtUtil.parseUser(token), book);
     }
 
-    public boolean hasRoleButNot(String token, Long bookId, RoleType roleType) {
-        return hasRoleButNot(jwtUtil.parseUserId(token), bookId, roleType);
+    public boolean hasRoleButNot(String token, Book book, RoleType roleType) {
+        return hasRoleButNot(jwtUtil.parseUser(token), book, roleType);
     }
 
-    public boolean canView(String token, Long bookId) {
-        return canView(jwtUtil.parseUserId(token), bookId);
+    public boolean canView(String token, Book book) {
+        return canView(jwtUtil.parseUser(token), book);
     }
 
-    public boolean canEdit(String token, Long bookId) {
-        return canEdit(jwtUtil.parseUserId(token), bookId);
+    public boolean canEdit(String token, Book book) {
+        return canEdit(jwtUtil.parseUser(token), book);
     }
 
-    public boolean canAdmin(String token, Long bookId) {
-        return canAdmin(jwtUtil.parseUserId(token), bookId);
+    public boolean canAdmin(String token, Book book) {
+        return canAdmin(jwtUtil.parseUser(token), book);
     }
 
-    public boolean isEditorOrViewer(String token, Long bookId) {
-        return isEditorOrViewer(jwtUtil.parseUserId(token), bookId);
+    public boolean isEditorOrViewer(String token,Book book) {
+        return isEditorOrViewer(jwtUtil.parseUser(token), book);
     }
 
 
