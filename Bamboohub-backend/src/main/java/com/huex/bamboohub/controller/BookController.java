@@ -59,7 +59,7 @@ public class BookController {
     }
 
     @GetMapping("books/alledit")
-    public Response<List<BookDTO>> getAllEditableBooks() {
+    public Response<List<BookDTO>> getALLEDITBooks() {
         try {
             return Response.newSuccess(bookService.getBooksByScope("", Book.Scope.ALLEDIT));
         } catch (Exception e) {
@@ -68,9 +68,18 @@ public class BookController {
     }
 
     @GetMapping("books/allread")
-    public Response<List<BookDTO>> getAllReadableBooks() {
+    public Response<List<BookDTO>> getALLREADBooks() {
         try {
             return Response.newSuccess(bookService.getBooksByScope("", Book.Scope.ALLREAD));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @GetMapping("books/allsearch")
+    public Response<List<BookDTO>> getALLSEARCHBooks() {
+        try {
+            return Response.newSuccess(bookService.getBooksByScope("", Book.Scope.ALLSEARCH));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }
