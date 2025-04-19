@@ -8,7 +8,9 @@ public interface BookService {
     BookDTO addNewBook(String token, BookReq bookReq);
     BookDTO getBookById(String token, Long id);
 
-    List<BookDTO> getMyBooks(String token);
+    List<BookDTOWithRole> getMyBooksWithRole(String token);
+    List<BookDTOWithRole> getALLREADAndALLEDITBooksWithRole(String token);
+
     List<BookDTO> getBooksByScope(String token, Book.Scope scope);
     List<BookDTO> getNonPrivateBooks();
 

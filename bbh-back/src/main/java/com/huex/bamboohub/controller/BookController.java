@@ -95,13 +95,23 @@ public class BookController {
     }
 
     @GetMapping("books/mine")
-    public Response<List<BookDTO>> getMyBooks(@RequestHeader("Authorization") String token) {
+    public Response<List<BookDTOWithRole>> getMyBooksWithRole(@RequestHeader("Authorization") String token) {
         try {
-            return Response.newSuccess(bookService.getMyBooks(token));
+            return Response.newSuccess(bookService.getMyBooksWithRole(token));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }
     }
+
+    @GetMapping("books/plaza")
+    public Response<List<BookDTOWithRole>> getALLREADAndALLEDITBooksWithRole(@RequestHeader(value="Authorization",required=false) String token) {
+        try {
+            return Response.newSuccess(bookService.getALLREADAndALLEDITBooksWithRole(token));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
 
 
     @DeleteMapping("/book/{id}")

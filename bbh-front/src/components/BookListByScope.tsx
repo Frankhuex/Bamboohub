@@ -3,27 +3,29 @@ import { useEffect, useState } from "react"
 import {toChinese, utc2current} from '../utils/util'
 
 interface Props {
-    scope: 'allread'|'alledit'|'allsearch'|'private'
+    scope: 'allread'|'alledit'|'allsearch'|'private'|'mine'
 }
 
 export default function BookListByScope({scope}:Props) {
     const [books, setBooks] = useState<BookDTO[] | null>(null)
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
 
     const fetchBooks = async () => {
         try {
             const response: ResponseData<BookDTO[]> = await httpService.get<BookDTO[]>(`/books/${scope}`)
+            if (response.success===false) {
+                setError(response.errorMsg)
+                return
+            }
             const sortedBooks: BookDTO[] = [...response.data].sort((b1, b2) => b1.title.localeCompare(b2.title,'zh-CN'))
             setBooks(sortedBooks)
             console.log(sortedBooks)
-        } catch (err) {
-            setError('Failed to fetch books')
-            console.error(err)
+        } catch (error) {
+            if (error instanceof Error)
+                setError(error.message)
         }
     }
-  
-
   
     useEffect( () => {
         const fetchData = async () => {
@@ -37,7 +39,7 @@ export default function BookListByScope({scope}:Props) {
         fetchData()
     }, [scope])
   
-    if (loading) return <div className="text-center py-4">Loading...</div>
+    if (loading) return (<div><span className="loading loading-spinner loading-xl"></span></div>)
     if (error) return <div className="text-center py-4 text-error">{error}</div>
   
     const renderBookItem = (book: BookDTO) => (
@@ -58,7 +60,7 @@ export default function BookListByScope({scope}:Props) {
     )
   
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 mb-16">
         <div>
             <h2 className="text-xl font-bold mb-2">{toChinese(scope)}</h2>
             <ul className="list bg-base-100 rounded-box shadow-md">

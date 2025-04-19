@@ -24,6 +24,31 @@ public class BookConverter {
         );
     }
 
+    public BookDTOWithRole toDTOWithRole(Role role) {
+        return new BookDTOWithRole(
+                role.getBook().getId(),
+                role.getBook().getCreateTime(),
+                role.getBook().getTitle(),
+                role.getBook().getStartPara().getId(),
+                role.getBook().getEndPara().getId(),
+                role.getBook().getScope(),
+                role.getRoleType()
+        );
+    }
+
+    public BookDTOWithRole toDTOWithRole(Book book, Role.RoleType roleType) {
+        return new BookDTOWithRole(
+                book.getId(),
+                book.getCreateTime(),
+                book.getTitle(),
+                book.getStartPara().getId(),
+                book.getEndPara().getId(),
+                book.getScope(),
+                roleType
+        );
+    }
+
+
     public List<BookDTO> toDTOs(List<Book> books) {
         return books.stream()
                .map(this::toDTO)

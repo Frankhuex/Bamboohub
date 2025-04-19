@@ -1,11 +1,11 @@
 export interface BookReq {
     title: string;
-    scope: BookScope;
+    scope: "ALLEDIT"|"ALLREAD"|"ALLSEARCH"|"PRIVATE";
 }
 
 export interface BookUpdateReq {
     title: string;
-    scope: BookScope;
+    scope: "ALLEDIT"|"ALLREAD"|"ALLSEARCH"|"PRIVATE";
 }
 
 export interface ChangePwdReq {
@@ -32,7 +32,7 @@ export interface ParagraphUpdateReq {
 export interface ParaRoleReq {
     userId: number;
     paraId: number;
-    roleType: ParaRoleType;
+    roleType: "CREATOR"|"CONTRIBUTOR";
 }
 
 export interface RegisterReq {
@@ -49,7 +49,7 @@ export interface RoleDeleteReq {
 export interface RoleReq {
     userId: number;
     bookId: number;
-    roleType: RoleType
+    roleType: "OWNER"|"ADMIN"|"EDITOR"|"VIEWER"
 }
 
 export interface UserUpdateReq {

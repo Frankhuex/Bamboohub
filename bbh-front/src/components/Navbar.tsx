@@ -1,4 +1,11 @@
-export default function Navbar() {
+interface NavbarProps {
+    chosenPage: number;
+}
+export default function Navbar({ chosenPage }: NavbarProps) {
+    const pageNameList=["书架","广场","阅读中","搜索","我的"]
+    function getPageName(chosenPage: number) {
+        return "Bamboohub · "+pageNameList[chosenPage];
+    }
     return (
         <div className="navbar bg-base-100 shadow-sm">
             <div className="navbar-start">
@@ -16,7 +23,7 @@ export default function Navbar() {
                 </div>
             </div>
             <div className="navbar-center">
-                <a className="btn btn-ghost text-xl">Bamboohub</a>
+                <a className="btn btn-ghost text-xl">{getPageName(chosenPage)}</a>
             </div>
             <div className="navbar-end">
                 <button className="btn btn-ghost btn-circle">
