@@ -80,14 +80,14 @@ form: <T = unknown, D extends Record<string, unknown> = Record<string, unknown>>
     }
 
     return http({
-    url,
-    method: 'POST' as Method,
-    data: formData,
-    headers: {
-        'Content-Type': 'multipart/form-data',
-        ...config?.headers,
-    },
-    ...config,
+        url,
+        method: 'POST' as Method,
+        data: formData,
+        headers: {
+            'Content-Type': 'multipart/form-data',
+            ...config?.headers,
+        },
+        ...config,
     });
 },
 
@@ -99,4 +99,18 @@ get: <T = unknown>(url: string, config?: Omit<RequestOptions, 'data'>): Promise<
         ...config,
     });
 },
+
+// 新增：无请求体的 POST 请求
+post: <T = unknown>(url: string, config?: Omit<RequestOptions, 'data'>): Promise<ResponseData<T>> => {
+    return http({
+        url,
+        method: 'POST' as Method,
+        headers: {
+            'Content-Type': 'application/json', // 保持一致的 Content-Type
+            ...config?.headers,
+        },
+        ...config,
+    });
+},
+
 };

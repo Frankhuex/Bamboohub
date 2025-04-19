@@ -114,7 +114,7 @@ public class UserController {
     }
 
     @GetMapping("/whoIFollow")
-    public Response<List<UserDTO>> getWhoIFollow(@RequestHeader("Authorization") String token) {
+    public Response<FollowsDTO> getWhoIFollow(@RequestHeader("Authorization") String token) {
         try {
             return Response.newSuccess(userService.getWhoIFollow(token));
         } catch (Exception e) {

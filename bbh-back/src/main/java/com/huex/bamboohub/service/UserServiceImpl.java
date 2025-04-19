@@ -2,7 +2,6 @@ package com.huex.bamboohub.service;
 
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +14,6 @@ import com.huex.bamboohub.util.*;
 import com.huex.bamboohub.converter.*;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -77,8 +75,12 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("No update occurred.");
         }
 
-        if (StringUtils.hasText(newUsername) && !userRepo.existsByUsername(newUsername)) // Already ensures old!=new
-            user.setUsername(userUpdateReq.getUsername());
+        if (StringUtils.hasText(newUsername)) {
+            if (userRepo.existsByUsername(newUsername) && !oldUsername.equals(newUsername))
+                throw new IllegalArgumentException("Username already exists.");
+            if (!oldUsername.equals(newUsername))
+                user.setUsername(userUpdateReq.getUsername());
+        }
 
         if (StringUtils.hasText(newNickname) && !oldNickname.equals(newNickname))
             user.setNickname(userUpdateReq.getNickname());
@@ -132,7 +134,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDTO> getWhoIFollow(String token) throws IllegalArgumentException {
+    public FollowsDTO getWhoIFollow(String token) throws IllegalArgumentException {
         User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
         return userServiceCache.getWhoIFollowByUser(user);
     }

@@ -7,11 +7,19 @@ interface BookDTO {
     scope: "ALLEDIT"|"ALLREAD"|"ALLSEARCH"|"PRIVATE";
 }
 
+interface BookDTOWithRole extends BookDTO {
+    roleType: "OWNER"|"ADMIN"|"EDITOR"|"VIEWER"|null;
+}
+
 interface FollowDTO {
     id: number;
     createTime: Date;
     sourceId: number;
-    targetId: number;
+    target: UserDTO;
+}
+
+interface FollowsDTO {
+    follows: FollowDTO[];
 }
 
 interface ParagraphDTO {

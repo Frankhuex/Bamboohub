@@ -61,9 +61,43 @@ public class BookServiceImpl implements BookService {
 
     @Override
     // Books where you have a role
-    public List<BookDTO> getMyBooks(String token) {
+    public List<BookDTOWithRole> getMyBooksWithRole(String token) {
         User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
         
+        List<Role> roles=roleRepo.findByUser(user);
+        List<BookDTOWithRole> bookDTOs = new ArrayList<>();
+        for (Role role : roles) {
+            bookDTOs.add(bookConverter.toDTOWithRole(role));
+        }
+        return bookDTOs;
+    }
+
+    @Override
+    // Books where you have a role
+    public List<BookDTOWithRole> getALLREADAndALLEDITBooksWithRole(String token) {
+        List<Book> books=bookRepo.findByScopeIn(List.of(Book.Scope.ALLREAD, Book.Scope.ALLEDIT));
+        User user=jwtUtil.parseUser(token).orElse(null);;;
+        List<BookDTOWithRole> bookDTOs = new ArrayList<>();
+        for (Book book: books) {
+            if (user==null) bookDTOs.add(bookConverter.toDTOWithRole(book, null));
+            else {
+                Role role = roleRepo.findByUserAndBook(user, book).orElse(null);
+                if (role != null) {
+                    bookDTOs.add(bookConverter.toDTOWithRole(role));
+                } else {
+                    bookDTOs.add(bookConverter.toDTOWithRole(book, null));
+                }
+            }
+        }
+
+        return bookDTOs;
+    }
+
+
+    // Books where you have a role
+    public List<BookDTO> getMyBooks(String token) {
+        User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
+
         List<Role> roles=roleRepo.findByUser(user);
         List<BookDTO> bookDTOs = new ArrayList<>();
         for (Role role : roles) {
