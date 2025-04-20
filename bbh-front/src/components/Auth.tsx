@@ -11,15 +11,18 @@ export default function Auth({setLoggedIn}:AuthProps) {
     const [confirmPassword,setConfirmPassword]=useState('');
     const [nickname,setNickname]=useState('');
     const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading]=useState<boolean>(false)
     async function login() {
+        setLoading(true)
         const loginReq:LoginReq={
             username:username,
             password:password
         }
         try {
-            const response:ResponseData<UserDTOWithToken> = await httpService.json<UserDTOWithToken>("/login",loginReq);
+            const response:ResponseData<UserDTOWithToken> = await httpService.json<UserDTOWithToken>("/login","POST",loginReq);
             if (response.success!==true) {
                 setError(response.errorMsg)
+                setLoading(false)
                 return
             }
             const userDTOWithToken:UserDTOWithToken=response.data
@@ -28,26 +31,29 @@ export default function Auth({setLoggedIn}:AuthProps) {
         } catch (error) {
             if (error instanceof Error)
                 setError(error.message)
+        } finally {
+            setLoading(false)
         }
     }
 
     async function register() {
+        setLoading(true)
         if (password!==confirmPassword) {
             setError('两次密码不一致')
             return
         }
-        if (password.length<6) {
-            setError('密码长度必须大于等于6')
-            return
-        }
-        if (password.match(/[a-zA-Z]/)===null) {
-            setError('密码必须包含字母')
-            return
-        }
-        if (password.match(/[0-9]/)===null) {
-            setError('密码必须包含数字')
-            return
-        }
+        // if (password.length<6) {
+        //     setError('密码长度必须大于等于6')
+        //     return
+        // }
+        // if (password.match(/[a-zA-Z]/)===null) {
+        //     setError('密码必须包含字母')
+        //     return
+        // }
+        // if (password.match(/[0-9]/)===null) {
+        //     setError('密码必须包含数字')
+        //     return
+        // }
         
 
         const registerReq:RegisterReq={
@@ -56,9 +62,10 @@ export default function Auth({setLoggedIn}:AuthProps) {
             nickname:nickname
         }
         try {
-            const response:ResponseData<UserDTOWithToken> = await httpService.json<UserDTOWithToken>("/register",registerReq);
+            const response:ResponseData<UserDTOWithToken> = await httpService.json<UserDTOWithToken>("/register","POST",registerReq);
             if (response.success!==true) {
                 setError(response.errorMsg)
+                setLoading(false)
                 return
             }
             const userDTOWithToken:UserDTOWithToken=response.data
@@ -66,6 +73,8 @@ export default function Auth({setLoggedIn}:AuthProps) {
         } catch (error) {
             if (error instanceof Error)
                 setError(error.message)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -100,7 +109,7 @@ export default function Auth({setLoggedIn}:AuthProps) {
                 <input onChange={(e)=>setNickname(e.target.value)} type="text" className="input" placeholder="昵称" />
 
                 <label className="label"><strong>密码</strong><br /></label>
-                <p className="text-xs text-gray-500">· 必须包含字母和数字，长度大于等于6</p>
+                <p className="text-xs text-gray-500"></p>
                 <input onChange={(e)=>setPassword(e.target.value)} type="password" className="input" placeholder="密码" />
 
                 <label className="label"><strong>确认密码</strong><br /></label>
@@ -112,7 +121,7 @@ export default function Auth({setLoggedIn}:AuthProps) {
             </fieldset>
         </div>
     )
-    
+    if (loading) return <div className="fixed inset-0 flex"><span className="loading loading-spinner loading-xl m-auto"></span></div>
     return (<>
                 <br></br>
                 <div className="tabs tabs-box mx-auto w-full flex justify-center lg:flex-none lg:justify-start" >

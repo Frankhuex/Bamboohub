@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig, Method } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 export interface ResponseData<T = unknown> {
     data: T;
     success: boolean;
@@ -51,11 +51,16 @@ interface RequestOptions<D = unknown> extends AxiosRequestConfig {
 // 封装三种请求方法
 export const httpService = {
 // JSON 格式请求
-json: <T = unknown, D = unknown>(url: string, data?: D, config?: Omit<RequestOptions<D>, 'data'>): Promise<ResponseData<T>> => {
+json: <T = unknown, D = unknown>(
+    url: string, 
+    method: 'POST' | 'PUT' | 'DELETE',
+    data?: D, 
+    config?: Omit<RequestOptions<D>, 'data'>
+): Promise<ResponseData<T>> => {
     return http({
         url,
-        method: 'POST' as Method,
-        data,
+        method: method,
+        data: data,
         headers: {
             'Content-Type': 'application/json',
             ...config?.headers,
@@ -64,24 +69,28 @@ json: <T = unknown, D = unknown>(url: string, data?: D, config?: Omit<RequestOpt
     });
 },
 
+
+
+
 // 表单格式请求
 form: <T = unknown, D extends Record<string, unknown> = Record<string, unknown>>(
     url: string,
+    method: 'POST' | 'PUT' | 'GET' | 'DELETE',
     data?: D,
     config?: Omit<RequestOptions<FormData>, 'data'>
 ): Promise<ResponseData<T>> => {
     const formData = new FormData();
     if (data) {
-    Object.entries(data).forEach(([key, value]) => {
-        if (value !== undefined) {
-        formData.append(key, value instanceof Blob ? value : String(value));
-        }
-    });
+        Object.entries(data).forEach(([key, value]) => {
+            if (value !== undefined) {
+            formData.append(key, value instanceof Blob ? value : String(value));
+            }
+        });
     }
 
     return http({
         url,
-        method: 'POST' as Method,
+        method: method,
         data: formData,
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -92,25 +101,29 @@ form: <T = unknown, D extends Record<string, unknown> = Record<string, unknown>>
 },
 
 // 无请求体的 GET 请求
-get: <T = unknown>(url: string, config?: Omit<RequestOptions, 'data'>): Promise<ResponseData<T>> => {
+empty: <T = unknown>(
+    url: string, 
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    config?: Omit<RequestOptions, 'data'>
+): Promise<ResponseData<T>> => {
     return http({
         url,
-        method: 'GET' as Method,
+        method: method,
         ...config,
     });
 },
 
 // 新增：无请求体的 POST 请求
-post: <T = unknown>(url: string, config?: Omit<RequestOptions, 'data'>): Promise<ResponseData<T>> => {
-    return http({
-        url,
-        method: 'POST' as Method,
-        headers: {
-            'Content-Type': 'application/json', // 保持一致的 Content-Type
-            ...config?.headers,
-        },
-        ...config,
-    });
-},
+// post: <T = unknown>(url: string, config?: Omit<RequestOptions, 'data'>): Promise<ResponseData<T>> => {
+//     return http({
+//         url,
+//         method: 'POST' as Method,
+//         headers: {
+//             'Content-Type': 'application/json', // 保持一致的 Content-Type
+//             ...config?.headers,
+//         },
+//         ...config,
+//     });
+// },
 
 };

@@ -5,7 +5,9 @@ import Navbar from './components/Navbar'
 import Dock from './components/Dock'
 import SideMenu from './components/SideMenu'
 import Profile from './pages/Profile'
-import BookFilterPage from './pages/BookFilterPage'
+import MyBookshelf from './pages/MyBookshelf'
+import Plaza from './pages/Plaza'
+import Search from './pages/Search'
 
 
 function App() {
@@ -36,8 +38,9 @@ function App() {
             lg:ml-[max(16rem,calc(50%-28rem))]  /* 最小16rem，否则居中 */
             max-w-4xl                       /* 内容最大宽度 */
           `}> {/* 内容居中 + 内边距 */}
-            {chosenPage === 0 && <BookFilterPage url={"mine"} defaultClassifiedBy='roleType' defaultSortedBy="title" />}
-            {chosenPage === 1 && <BookFilterPage url={"plaza"} defaultClassifiedBy='scope' defaultSortedBy="title" />}
+            {chosenPage === 0 && <MyBookshelf />}
+            {chosenPage === 1 && <Plaza />}
+            {chosenPage === 3 && <Search />}
             {chosenPage === 4 && <Profile />}
             {/* 其他页面... */}
           </div>

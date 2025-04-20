@@ -39,9 +39,9 @@ public class BookController {
     }
 
     @GetMapping("books/search")
-    public Response<List<BookDTO>> searchBooksByTitle(@RequestHeader(value="Authorization",required=false) String token, @RequestParam("title") String title) {
+    public Response<List<BookDTOWithRole>> searchBooksByTitleWithRole(@RequestHeader(value="Authorization",required=false) String token, @RequestParam("title") String title) {
         try {
-            return Response.newSuccess(bookService.searchBooksByTitle(token,title));
+            return Response.newSuccess(bookService.searchBooksByTitleWithRole(token,title));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }

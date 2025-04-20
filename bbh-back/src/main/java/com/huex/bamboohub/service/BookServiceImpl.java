@@ -67,7 +67,7 @@ public class BookServiceImpl implements BookService {
         List<Role> roles=roleRepo.findByUser(user);
         List<BookDTOWithRole> bookDTOs = new ArrayList<>();
         for (Role role : roles) {
-            bookDTOs.add(bookConverter.toDTOWithRole(role));
+            bookDTOs.add(bookConverter.toDTOWithRole(role.getBook(),role));
         }
         return bookDTOs;
     }
@@ -79,15 +79,7 @@ public class BookServiceImpl implements BookService {
         User user=jwtUtil.parseUser(token).orElse(null);;;
         List<BookDTOWithRole> bookDTOs = new ArrayList<>();
         for (Book book: books) {
-            if (user==null) bookDTOs.add(bookConverter.toDTOWithRole(book, null));
-            else {
-                Role role = roleRepo.findByUserAndBook(user, book).orElse(null);
-                if (role != null) {
-                    bookDTOs.add(bookConverter.toDTOWithRole(role));
-                } else {
-                    bookDTOs.add(bookConverter.toDTOWithRole(book, null));
-                }
-            }
+            addToFilteredBooks(bookDTOs, user, book);
         }
 
         return bookDTOs;
@@ -139,6 +131,27 @@ public class BookServiceImpl implements BookService {
         return bookConverter.toDTOs(filteredBooks);
     }
 
+    @Override
+    public List<BookDTOWithRole> searchBooksByTitleWithRole(String token, String title) {
+        List<Book> books=bookRepo.findByTitleContaining(title);
+        List<BookDTOWithRole> filteredBooks=new ArrayList<>();
+        User user=jwtUtil.parseUser(token).orElse(null);
+        for (Book book: books) {
+            if (roleUtil.generalCanSearchBook(user,book)) {
+                addToFilteredBooks(filteredBooks, user, book);
+            }
+        }
+        return filteredBooks;
+    }
+
+    private void addToFilteredBooks(List<BookDTOWithRole> filteredBooks, User user, Book book) {
+        if (user==null) filteredBooks.add(bookConverter.toDTOWithRole(book, null));
+        else {
+            Role role=roleRepo.findByUserAndBook(user, book).orElse(null);
+            filteredBooks.add(bookConverter.toDTOWithRole(book,role));
+        }
+    }
+
 
     @Override
     @CacheEvict(value = "books", key="'book:'+#id")
@@ -170,6 +183,6 @@ public class BookServiceImpl implements BookService {
         bookRepo.save(book);
         return bookConverter.toDTO(book);
     }
-    
-    
+
+
 }

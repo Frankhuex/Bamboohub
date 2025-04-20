@@ -13,15 +13,20 @@ const filterAndClassifyBooks = (
     books: BookDTOWithRole[] | null,
     query: string,
     sortedBy: 'title' | 'createTime',
-    classifiedBy: 'scope' | 'roleType'|'null'
+    classifiedBy: 'scope' | 'roleType'|'null',
 ): BookDTOWithRole[][] => {
     if (!books) return [];
-    if (classifiedBy === 'null') return [[...books]];
 
     // 过滤逻辑
     const filtered = query 
         ? books.filter(book => book.title.toLowerCase().includes(query.toLowerCase())) 
         : [...books];
+
+    if (classifiedBy === 'null') return [
+        filtered.sort((a, b) => sortedBy === 'title' 
+        ? a.title.localeCompare(b.title,'zh-CN') 
+        : new Date(b.createTime).getTime() - new Date(a.createTime).getTime())
+    ];
 
     // 分类配置
     const classificationMap = {
@@ -36,7 +41,7 @@ const filterAndClassifyBooks = (
             classifiedBy === 'scope' ? book.scope === category : book.roleType === category
         );
         return group.sort((a, b) => sortedBy === 'title' 
-            ? a.title.localeCompare(b.title) 
+            ? a.title.localeCompare(b.title,'zh-CN') 
             : new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
         );
     });
@@ -53,8 +58,8 @@ const BookItem = ({ book }: { book: BookDTOWithRole }) => (
     </div>
     <div>
         <div>{book.title}</div>
-        <div className="text-xs uppercase font-semibold opacity-60">{toChinese(book.scope)+" "+toChinese(book.roleType)}</div>
-        <div className="text-xs uppercase font-semibold opacity-60">{utc2current(book.createTime)}</div>
+        <div className="text-xs font-semibold opacity-60">{toChinese(book.scope)+" "+toChinese(book.roleType)}</div>
+        <div className="text-xs font-semibold opacity-60">创建于{utc2current(book.createTime)}</div>
     </div>
   </li>
 );
@@ -94,7 +99,7 @@ export default function BookFilter({ books, query, sortedBy, classifiedBy }: Boo
         [books, query, sortedBy, classifiedBy]
     ).filter(g => g.length > 0);
 
-    if (!books) return <div className="text-center py-8">加载中...</div>;
+    if (!books) return <div className="fixed inset-0 flex"><span className="loading loading-spinner loading-xl m-auto"></span></div>;
     if (groups.every(g => g.length === 0)) return <div className="text-center py-8">暂无数据</div>;
 
     return (
