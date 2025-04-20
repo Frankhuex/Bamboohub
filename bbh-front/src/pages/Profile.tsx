@@ -4,6 +4,7 @@ import {useEffect, useState} from "react";
 import WhoIFollow from "../components/WhoIFollow";
 import { UserUpdateReq } from "../types/request.types";
 import ChangeUsnPwd from "../components/ChangeUsnPwd";
+import { utc2current } from "../utils/util";
 export default function Profile() {
     
 
@@ -87,13 +88,13 @@ export default function Profile() {
     return (
     <div className="min-h-screen flex flex-col">
         <div className="flex-1">
-            <div className="bg-base-100 border-base-300 border">
+            <div className="bg-base-100 border-base-300 border rounded-box">
                 {/* <input type="checkbox" /> */}
-                <div className="collapse-title grid place-content-center text-[clamp(3rem,5vw,5rem)] font-black">
+                <div className="mt-5 grid place-content-center text-[clamp(3rem,5vw,5rem)] font-black">
                     Hello, {userDTO?.nickname}!
                 </div>
                 {changingNickname===true && 
-                (<div className="collapse-title flex items-stretch h-[5.5rem] place-content-center">
+                (<div className="flex items-stretch h-[5.5rem] place-content-center">
                     <input
                         type="text"
                         placeholder={userDTO?.nickname}
@@ -107,10 +108,13 @@ export default function Profile() {
                     </button>
                   </div>)
                 }
-                <div onClick={() => setChangingNickname(true)} className="collapse-title text-sm flex justify-center text-xs font-semibold opacity-60">
+                <div className=" text-sm flex justify-center text-xs font-semibold opacity-60">
                     @{userDTO?.username}
-                    <a className="link ml-3">修改昵称</a>
+                    <a onClick={() => setChangingNickname(true)} className="link ml-3">修改昵称</a>
                 </div>
+                {userDTO && <div className="mb-5 mt-3 text-sm flex justify-center text-xs font-semibold opacity-60">
+                    注册于{utc2current(userDTO?.createTime)}
+                </div>}
                 <p className="text-red-500">{error}</p>
                 
                 
