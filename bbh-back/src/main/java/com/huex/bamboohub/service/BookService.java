@@ -15,6 +15,7 @@ public interface BookService {
     List<BookDTO> getNonPrivateBooks();
 
     List<BookDTO> searchBooksByTitle(String token, String title);
+    List<BookDTOWithRole> searchBooksByTitleWithRole(String token, String title);
 
     boolean deleteBookById(String token, Long id);
     BookDTO updateBookById(String token, Long id, BookUpdateReq bookUpdReq);

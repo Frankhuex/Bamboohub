@@ -24,19 +24,12 @@ public class BookConverter {
         );
     }
 
-    public BookDTOWithRole toDTOWithRole(Role role) {
-        return new BookDTOWithRole(
-                role.getBook().getId(),
-                role.getBook().getCreateTime(),
-                role.getBook().getTitle(),
-                role.getBook().getStartPara().getId(),
-                role.getBook().getEndPara().getId(),
-                role.getBook().getScope(),
-                role.getRoleType()
-        );
-    }
 
-    public BookDTOWithRole toDTOWithRole(Book book, Role.RoleType roleType) {
+    public BookDTOWithRole toDTOWithRole(Book book, Role role) {
+        Role.RoleType roleType = null;
+        if (role != null) {
+            roleType = role.getRoleType();
+        }
         return new BookDTOWithRole(
                 book.getId(),
                 book.getCreateTime(),
