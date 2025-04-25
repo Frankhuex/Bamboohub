@@ -86,9 +86,9 @@ public class UserController {
 
 
     @GetMapping("/users/search")
-    public Response<List<UserDTO>> searchUsers(@RequestParam("query") String query) {
+    public Response<List<UserDTOWithFollow>> searchUsers(@RequestHeader(value="Authorization",required=false) String token, @RequestParam("query") String query) {
         try {
-            return Response.newSuccess(userService.searchUsersByAny(query));
+            return Response.newSuccess(userService.searchUsersByAnyWithFollow(token,query));
         } catch (Exception e) {
             return newFail(e.getMessage());
         }
@@ -113,13 +113,23 @@ public class UserController {
         }
     }
 
-    @GetMapping("/whoIFollow")
-    public Response<FollowsDTO> getWhoIFollow(@RequestHeader("Authorization") String token) {
+//    @GetMapping("/whoIFollow")
+//    public Response<FollowsDTO> getWhoIFollow(@RequestHeader("Authorization") String token) {
+//        try {
+//            return Response.newSuccess(userService.getWhoIFollow(token));
+//        } catch (Exception e) {
+//            return newFail(e.getMessage());
+//        }
+//    }
+    
+    @GetMapping("/myFollowing")
+    public Response<List<UserDTOWithFollow>> getMyFollowing(@RequestHeader("Authorization") String token) {
         try {
-            return Response.newSuccess(userService.getWhoIFollow(token));
+            return Response.newSuccess(userService.getMyFollowing(token));
         } catch (Exception e) {
             return newFail(e.getMessage());
         }
     }
+
 
 }

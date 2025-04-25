@@ -12,7 +12,8 @@ export default function Auth({setLoggedIn}:AuthProps) {
     const [nickname,setNickname]=useState('');
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading]=useState<boolean>(false)
-    async function login() {
+
+    const login = async () => {
         setLoading(true)
         const loginReq:LoginReq={
             username:username,
@@ -36,7 +37,7 @@ export default function Auth({setLoggedIn}:AuthProps) {
         }
     }
 
-    async function register() {
+    const register = async () => {
         setLoading(true)
         if (password!==confirmPassword) {
             setError('两次密码不一致')

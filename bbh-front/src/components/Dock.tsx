@@ -4,7 +4,7 @@ interface DockProps {
 }
 export default function Dock({chosenPage, onPageChange}:DockProps) {
 
-    function getButtonClass(index:number) {
+    const getButtonClass = (index:number) => {
         return chosenPage===index?"dock-active":"";
     }
 
@@ -31,10 +31,8 @@ export default function Dock({chosenPage, onPageChange}:DockProps) {
                 <button
                     className={getButtonClass(2)}
                     onClick={()=>onPageChange(2)}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-                    </svg>
-                    <span className="dock-label">阅读中</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    <span className="dock-label">新建</span>
                 </button>
                 <button 
                     className={getButtonClass(3)}

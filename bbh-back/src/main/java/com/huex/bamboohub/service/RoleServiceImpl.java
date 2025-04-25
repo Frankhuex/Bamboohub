@@ -89,6 +89,12 @@ public class RoleServiceImpl implements RoleService {
 
         role.setRoleType(newRoleType);
         Role savedRole=roleRepo.save(role);
+
+        Cache cache=cacheManager.getCache("rolesOfBook");
+        if (cache!=null) {
+            cache.evict("bookId:"+book.getId());
+        }
+
         return roleConverter.toDTO(savedRole);
     }
 

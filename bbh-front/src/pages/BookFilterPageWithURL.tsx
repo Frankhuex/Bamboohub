@@ -12,7 +12,7 @@ export default function BookFilterPageWithURL({url="plaza",defaultClassifiedBy="
     const [loading, setLoading]=useState<boolean>(false)
     const [error, setError]=useState<string|null>(null)
 
-    async function fetchBooks() {
+    const fetchBooks = async () => {
         try {
             const response: ResponseData<BookDTOWithRole[]> = await httpService.empty<BookDTOWithRole[]>(`/books/${url}`, "GET")
             if (response.success===false) {

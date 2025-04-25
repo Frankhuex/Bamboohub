@@ -33,7 +33,7 @@ export default function BookFilterPage({books,defaultClassifiedBy="roleType",def
                 <input onChange={(e) => setQuery(e.target.value)} type="search" className="grow" placeholder="搜索书名" />
             </label>
         </div>)}
-        <div className="flex justify-between items-center gap-6 mt-7 flex-col md:flex-row"> {/* 增加间隙并居中对齐 */}
+        <div className="flex justify-between gap-6 mt-7 flex-col md:flex-row"> {/* 增加间隙并居中对齐 */}
             {showClassifiedBy && (<div className="flex items-center gap-2">
                 <span className="font-semibold">分类：</span>
                 <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto">

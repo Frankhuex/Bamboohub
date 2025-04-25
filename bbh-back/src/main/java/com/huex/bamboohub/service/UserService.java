@@ -17,4 +17,6 @@ public interface UserService {
     FollowDTO followUser(String token, Long targetId);
     boolean unfollowUser(String token, Long targetId);
     FollowsDTO getWhoIFollow(String token);
+    List<UserDTOWithFollow> getMyFollowing(String token);
+    List<UserDTOWithFollow> searchUsersByAnyWithFollow(String token, String query);
 }

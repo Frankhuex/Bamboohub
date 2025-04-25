@@ -1,4 +1,5 @@
 package com.huex.bamboohub.converter;
+import com.huex.bamboohub.dao.Follow;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.huex.bamboohub.dao.User;
 import com.huex.bamboohub.dto.*;
@@ -7,6 +8,7 @@ import com.huex.bamboohub.util.PasswordUtil;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -23,6 +25,49 @@ public class UserConverter {
                 user.getUsername(),
                 user.getNickname(),
                 token
+        );
+    }
+
+    public UserDTOWithFollow toDTOWithFollow(User user, boolean followed, Date followTime) {
+        return new UserDTOWithFollow(
+                user.getId(),
+                user.getCreateTime(),
+                user.getUsername(),
+                user.getNickname(),
+                followed,
+                followTime
+        );
+    }
+
+    public UserDTOWithFollow toDTOWithFollow(Follow follow) {
+        User user=follow.getTarget();
+        return new UserDTOWithFollow(
+                user.getId(),
+                user.getCreateTime(),
+                user.getUsername(),
+                user.getNickname(),
+                true,
+                follow.getCreateTime()
+        );
+    }
+
+    public UserDTOWithFollow toDTOWithFollow(User user, Follow follow) {
+        boolean followed;
+        Date followTime;
+        if (follow==null) {
+            followed=false;
+            followTime=null;
+        } else {
+            followed=true;
+            followTime=follow.getCreateTime();
+        }
+        return new UserDTOWithFollow(
+            user.getId(),
+            user.getCreateTime(),
+            user.getUsername(),
+            user.getNickname(),
+            followed,
+            followTime
         );
     }
 

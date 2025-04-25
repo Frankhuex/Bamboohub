@@ -13,7 +13,7 @@ export default function ChangeUsnPwd({setChangingUsnPwd}:Props) {
 
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
-    async function changeUsername() {
+    const changeUsername = async () => {
         setLoading(true)
         const userUpdateReq:UserUpdateReq={
             username:username,
@@ -36,7 +36,7 @@ export default function ChangeUsnPwd({setChangingUsnPwd}:Props) {
         }
     }
 
-    async function changePassword() {
+    const changePassword = async () => {
         setLoading(true)
         if (newPwd!==confirmNewPwd) {
             setError('两次密码不一致')
