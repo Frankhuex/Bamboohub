@@ -70,3 +70,8 @@ interface UserDTO {
 interface UserDTOWithToken extends UserDTO {
     token: string;
 }
+
+interface UserDTOWithFollow extends UserDTO {
+    followed: boolean;
+    followTime: Date|null;
+}

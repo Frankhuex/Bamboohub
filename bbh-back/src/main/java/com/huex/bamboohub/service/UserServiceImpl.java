@@ -14,6 +14,8 @@ import com.huex.bamboohub.util.*;
 import com.huex.bamboohub.converter.*;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -102,9 +104,33 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDTO> searchUsersByAny(String query)  throws IllegalArgumentException {
+    public List<UserDTO> searchUsersByAny(String query) throws IllegalArgumentException {
         return userConverter.toDTOs(userRepo.findByUsernameContainingOrNicknameContaining(query, query));
     }
+
+    @Override
+    public List<UserDTOWithFollow> searchUsersByAnyWithFollow(String token, String query) {
+        if (!StringUtils.hasText(query)) {
+            return new ArrayList<>();
+        }
+        List<User> users=userRepo.findByUsernameContainingOrNicknameContaining(query, query);
+        List<UserDTOWithFollow> usersWithFollow=new ArrayList<>();
+        User user=jwtUtil.parseUser(token).orElse(null);
+        for (User target: users) {
+            if (user==null) usersWithFollow.add(userConverter.toDTOWithFollow(user,null));
+            else {
+                Follow follow=followRepo.findBySourceAndTarget(user, target).orElse(null);
+                usersWithFollow.add(userConverter.toDTOWithFollow(target,follow));
+            }
+        }
+        usersWithFollow.sort((u1, u2) -> {
+            String u1Name=u1.getUsername().contains(query)?u1.getUsername():u1.getNickname();
+            String u2Name=u2.getUsername().contains(query)?u2.getUsername():u2.getNickname();
+            return u1Name.length()-u2Name.length();
+        });
+        return usersWithFollow;
+    }
+
 
     @Override
     public FollowDTO followUser(String token, Long targetId) throws IllegalArgumentException {
@@ -136,6 +162,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public FollowsDTO getWhoIFollow(String token) throws IllegalArgumentException {
         User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
-        return userServiceCache.getWhoIFollowByUser(user);
+        return followConverter.toFollowsDTO(followRepo.findBySource(user));
     }
+
+    @Override
+    public List<UserDTOWithFollow> getMyFollowing(String token) throws IllegalArgumentException {
+        User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
+        List<Follow> follows=followRepo.findBySource(user);
+        return follows.stream().map(follow->userConverter.toDTOWithFollow(follow)).toList();
+    }
+
 }

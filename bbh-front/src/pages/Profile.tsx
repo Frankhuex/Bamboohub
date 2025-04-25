@@ -1,10 +1,10 @@
 import Auth from "../components/Auth";
 import {httpService, ResponseData} from '../api/client'
 import {useEffect, useState} from "react";
-import WhoIFollow from "../components/WhoIFollow";
 import { UserUpdateReq } from "../types/request.types";
 import ChangeUsnPwd from "../components/ChangeUsnPwd";
 import { utc2current } from "../utils/util";
+import MyFollowing from "../components/MyFollowing";
 export default function Profile() {
     
 
@@ -19,7 +19,7 @@ export default function Profile() {
 
     const [changingUsnPwd, setChangingUsnPwd]=useState<boolean>(false)
 
-    async function fetchProfile() {
+    const fetchProfile = async () => {
         try {
             const response:ResponseData<UserDTO>=await httpService.empty<UserDTO>("/myProfile",'GET')
             if (response.success===false) {
@@ -33,12 +33,12 @@ export default function Profile() {
         }
     }
 
-    async function logout() {
+    const logout = () => {
         localStorage.removeItem("token")
         setLoggedIn(false)
     }
 
-    async function handleUpdateNickname(newNickname: string) {
+    const handleUpdateNickname = async (newNickname: string) => {
         try {
             setLoading(true)
             const userUpdateReq:UserUpdateReq={
@@ -120,7 +120,7 @@ export default function Profile() {
                 
             </div>
             <div className="mt-10">
-                <WhoIFollow />
+                <MyFollowing />
             </div>
         </div>
         <div className="grid place-content-center p-4 bottom-0 bg-base-10 mb-40">
