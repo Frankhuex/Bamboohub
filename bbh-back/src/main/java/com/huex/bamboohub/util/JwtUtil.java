@@ -56,7 +56,7 @@ public class JwtUtil {
             String uuid = claims.getId();
             String subject = claims.getSubject();
             Date expiration = claims.getExpiration();
-            System.out.println("Expiration Date: " + expiration);
+//            System.out.println("Expiration Date: " + expiration);
             return Optional.of(claims);
         } catch (Exception e) {
             return Optional.empty();

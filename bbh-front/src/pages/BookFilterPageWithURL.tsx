@@ -4,10 +4,10 @@ import BookFilterPage from "../components/BookFilterPage";
 
 interface BookFilterPageWithURLProps {
     url:"mine"|"plaza";
-    defaultClassifiedBy: "scope"|"roleType"|"null";
-    defaultSortedBy: "title"|"createTime";
+    defaultClassifiedBy?: "scope"|"roleType"|"null";
+    defaultSortedBy?: "title"|"createTime";
 }
-export default function BookFilterPageWithURL({url="plaza",defaultClassifiedBy="roleType",defaultSortedBy="title"}:BookFilterPageWithURLProps) {
+export default function BookFilterPageWithURL({url="plaza",defaultClassifiedBy="null",defaultSortedBy="createTime"}:BookFilterPageWithURLProps) {
     const [books, setBooks]=useState<BookDTOWithRole[]|null>(null)
     const [loading, setLoading]=useState<boolean>(false)
     const [error, setError]=useState<string|null>(null)

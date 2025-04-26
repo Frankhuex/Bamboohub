@@ -11,13 +11,22 @@ import Search from './pages/Search'
 
 
 function App() {
-  const [chosenPage, setChosenPage] = useState<number>(1);
+  const [chosenPage, setChosenPage] = useState<number>(
+    Number(localStorage.getItem('chosenPage')) || 1
+  );
+
+  const setChosenPageAndSave=async(index:number)=>{
+    setChosenPage(index);
+    localStorage.setItem('chosenPage', index.toString());
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* 1. 固定在顶部的 Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white shadow-sm">
-        <Navbar chosenPage={chosenPage} />
+        <Navbar chosenPage={chosenPage} 
+          onSearchBtnClick={()=>setChosenPageAndSave(3)} 
+          onCreateBtnClick={()=>setChosenPageAndSave(2)} />
       </header>
 
       {/* 2. 主容器（flex布局，SideMenu + 内容区） */}
@@ -26,7 +35,7 @@ function App() {
         <aside className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 z-40 bg-white shadow-lg">
           <SideMenu 
             chosenPage={chosenPage}
-            onPageChange={setChosenPage}
+            onPageChange={setChosenPageAndSave}
           />
         </aside>
 
@@ -51,7 +60,7 @@ function App() {
       <footer className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
         <Dock 
           chosenPage={chosenPage}
-          onPageChange={setChosenPage}
+          onPageChange={setChosenPageAndSave}
         />
       </footer>
     </div>

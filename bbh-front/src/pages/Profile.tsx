@@ -94,11 +94,11 @@ export default function Profile() {
                     Hello, {userDTO?.nickname}!
                 </div>
                 {changingNickname===true && 
-                (<div className="flex items-stretch h-[5.5rem] place-content-center">
+                (<div className="flex items-stretch h-[5.5rem] place-content-center m-3">
                     <input
                         type="text"
                         placeholder={userDTO?.nickname}
-                        className="input input-bordered text-[clamp(2rem,5vw,2rem)] font-black p-4 
+                        className="input input-bordered text-[clamp(3rem,5vw,2rem)] font-black p-4 
                                rounded-r-none border-r-0 h-full"
                         onChange={(e)=>setNewNickname(e.target.value)}
                     />

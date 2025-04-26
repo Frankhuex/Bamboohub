@@ -81,7 +81,7 @@ export default function Auth({setLoggedIn}:AuthProps) {
 
     const loginCard=(
         <div className="flex justify-center w-full">
-            <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+            <form className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
                 <legend className="fieldset-legend">登录</legend>
 
                 <label className="label">用户名</label>
@@ -90,15 +90,15 @@ export default function Auth({setLoggedIn}:AuthProps) {
                 <label className="label">密码</label>
                 <input onChange={(e)=>setPassword(e.target.value)} type="password" className="input" placeholder="密码" />
 
-                <button onClick={()=>login()} className="btn btn-neutral mt-4">登录</button>
+                <button onClick={()=>login()} className="btn btn-neutral mt-4" type="submit">登录</button>
                 <p className="text-red-500">{error}</p>
-            </fieldset>
+            </form>
         </div>
     )
 
     const registerCard=(
         <div className="flex justify-center w-full">
-            <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+            <form className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
                 <legend className="fieldset-legend">注册</legend>
 
                 <label className="label"><strong>用户名</strong><br /></label>
@@ -119,7 +119,7 @@ export default function Auth({setLoggedIn}:AuthProps) {
 
                 <button onClick={()=>register()} className="btn btn-neutral mt-4">注册</button>
                 <p className="text-red-500">{error}</p>
-            </fieldset>
+            </form>
         </div>
     )
     if (loading) return <div className="fixed inset-0 flex"><span className="loading loading-spinner loading-xl m-auto"></span></div>
