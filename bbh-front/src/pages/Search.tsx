@@ -9,8 +9,8 @@ export default function Search() {
     const [loading, setLoading]=useState<boolean>(false)
     const [error, setError]=useState<string|null>(null)
 
-    const [books, setBooks]=useState<BookDTOWithRole[]|null>(null)
-    const [users, setUsers]=useState<UserDTOWithFollow[]|null>(null)
+    const [books, setBooks]=useState<BookDTOWithRole[]>([])
+    const [users, setUsers]=useState<UserDTOWithFollow[]>([])
     
 
     const fetchBooks = async () => {

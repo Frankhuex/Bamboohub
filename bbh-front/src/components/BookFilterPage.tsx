@@ -9,7 +9,7 @@ interface BookFilterPageProps {
     showClassifiedBy?: boolean;
     showSortedBy?: boolean;
 }
-export default function BookFilterPage({books,defaultClassifiedBy="roleType",defaultSortedBy="title",showSearchBox=true,showClassifiedBy=true,showSortedBy=true}:BookFilterPageProps) {
+export default function BookFilterPage({books,defaultClassifiedBy="null",defaultSortedBy="createTime",showSearchBox=true,showClassifiedBy=true,showSortedBy=true}:BookFilterPageProps) {
     const [query, setQuery]=useState<string>("")
     const [sortedBy, setSortedBy]=useState<"title"|"createTime">(defaultSortedBy)
     const [classifiedBy, setClassifiedBy]=useState<"scope"|"roleType"|"null">(defaultClassifiedBy)
@@ -39,11 +39,12 @@ export default function BookFilterPage({books,defaultClassifiedBy="roleType",def
                 <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto">
                     <li className="m-1 w-auto">
                         <a
-                        className={classifiedBy === "roleType" ? "menu-active" : ""}
-                        onClick={() => { setClassifiedBy("roleType") }}>
-                            我的身份
+                        className={classifiedBy === "null" ? "menu-active" : ""} 
+                        onClick={() => { setClassifiedBy("null") }}>
+                            无
                         </a>
                     </li>
+                    
                     <li className="m-1 w-auto">
                         <a 
                         className={classifiedBy === "scope" ? "menu-active" : ""} 
@@ -51,13 +52,15 @@ export default function BookFilterPage({books,defaultClassifiedBy="roleType",def
                             书本权限
                         </a>
                     </li>
+
                     <li className="m-1 w-auto">
                         <a
-                        className={classifiedBy === "null" ? "menu-active" : ""} 
-                        onClick={() => { setClassifiedBy("null") }}>
-                            无
+                        className={classifiedBy === "roleType" ? "menu-active" : ""}
+                        onClick={() => { setClassifiedBy("roleType") }}>
+                            我的身份
                         </a>
                     </li>
+                    
                 </ul>
             </div>)}
 
@@ -67,18 +70,20 @@ export default function BookFilterPage({books,defaultClassifiedBy="roleType",def
                 <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto">
                     <li className="m-1 w-auto">
                         <a 
-                        className={sortedBy === "title" ? "menu-active" : ""}
-                        onClick={() => { setSortedBy("title") }}>
-                        书名
-                        </a>
-                    </li>
-                    <li className="m-1 w-auto">
-                        <a 
                         className={sortedBy === "createTime" ? "menu-active" : ""} 
                         onClick={() => { setSortedBy("createTime") }}>
                         创建时间
                         </a>
                     </li>
+
+                    <li className="m-1 w-auto">
+                        <a 
+                        className={sortedBy === "title" ? "menu-active" : ""}
+                        onClick={() => { setSortedBy("title") }}>
+                        书名
+                        </a>
+                    </li>
+                    
                 </ul>
             </div>)}
         </div>

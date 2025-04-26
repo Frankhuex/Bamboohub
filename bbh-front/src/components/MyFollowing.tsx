@@ -8,6 +8,7 @@ export default function MyFollowing() {
     const [sortedBy, setSortedBy] = useState<"nickname"|"followTime">("nickname");
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [processedList, setProcessedList] = useState<UserDTOWithFollow[]>([]);
 
     const fetchFolloweeList = async () => {
         setLoading(true)
@@ -18,8 +19,9 @@ export default function MyFollowing() {
                 console.log(response.errorMsg)
                 return
             }
+            setFolloweeList(response.data)
             const sortedList:UserDTOWithFollow[] = response.data.sort((a, b) => a.nickname.localeCompare(b.nickname,'zh-CN'))
-            setFolloweeList(sortedList)
+            setProcessedList(sortedList)
         } catch (error) {
             if (error instanceof Error) {
                 setError(error.message)
@@ -61,14 +63,19 @@ export default function MyFollowing() {
 
     const resortList = (sortedBy: "nickname"|"followTime") => {
         setSortedBy(sortedBy)
-        const sortedList:UserDTOWithFollow[] = followeeList?.sort((a, b) => {
+        const sortedList:UserDTOWithFollow[] = processedList?.sort((a, b) => {
             if (sortedBy === "nickname") {
                 return a.nickname.localeCompare(b.nickname,'zh-CN')
             } else {
                 return new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
             }
         })
-        setFolloweeList(sortedList)
+        setProcessedList(sortedList)
+    }
+
+    const filterListByQuery = (query: string) => {
+        const filteredList:UserDTOWithFollow[] = followeeList?.filter(user => (user.nickname.includes(query)||user.username.includes(query)))
+        setProcessedList(filteredList)
     }
 
     useEffect( () => {
@@ -87,35 +94,54 @@ export default function MyFollowing() {
     if (error) return <div className="text-center py-4 text-error">{error}</div>
     return (
         <div className="space-y-4">
-            <div>
-                <div className="flex justify-between items-center mb-3">
-                    <h2 className="text-xl font-bold">我的关注</h2>
-                    <div className="flex justify-between gap-6 flex-col"> {/* 增加间隙并居中对齐 */}
-                        <div className="flex items-center gap-2">
-                            <span className="font-semibold">排序：</span>
-                            <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto">
-                                <li className="m-1 w-auto">
-                                    <a
-                                        className={sortedBy === "nickname" ? "menu-active" : ""}
-                                        onClick={()=>resortList("nickname")}
-                                    >
-                                        昵称
-                                    </a>
-                                </li>
-                                <li className="m-1 w-auto">
-                                    <a 
-                                        className={sortedBy === "followTime" ? "menu-active" : ""} 
-                                        onClick={()=>resortList("followTime")}
-                                    >
-                                        关注时间
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+
+            <h2 className="text-xl font-bold">我的关注</h2>
+            <div className="flex justify-between items-center mb-3">
+                
+
+                <div className="flex justify-center flex-1 mr-3">
+                    <label className="input flex items-center gap-4 w-full">
+                        <svg className="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <g
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                            strokeWidth="2.5"
+                            fill="none"
+                            stroke="currentColor"
+                            >
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.3-4.3"></path>
+                            </g>
+                        </svg>
+                        <input onChange={(e) => filterListByQuery(e.target.value)} type="search" className="grow" placeholder="搜索关注" />
+                    </label>
                 </div>
-                <UserList userDTOs={followeeList} setUserDTOs={setFolloweeList} />
+                <div>
+                    <span className="font-semibold">排序：</span>
+                    <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto">
+                        <li className="m-1 w-auto">
+                            <a
+                                className={sortedBy === "nickname" ? "menu-active" : ""}
+                                onClick={()=>resortList("nickname")}
+                            >
+                                昵称
+                            </a>
+                        </li>
+                        <li className="m-1 w-auto">
+                            <a 
+                                className={sortedBy === "followTime" ? "menu-active" : ""} 
+                                onClick={()=>resortList("followTime")}
+                            >
+                                关注时间
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+
             </div>
+            <UserList userDTOs={processedList} setUserDTOs={setProcessedList} />
+
             
         </div>
     )
