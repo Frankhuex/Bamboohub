@@ -13,6 +13,6 @@ public class RoleDTO {
 
     private Date createTime;
     private Long bookId;
-    private UserDTO user;
+    private UserDTO userDTO;
     private RoleType roleType;
 }

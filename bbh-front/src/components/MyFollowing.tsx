@@ -9,6 +9,7 @@ export default function MyFollowing() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [processedList, setProcessedList] = useState<UserDTOWithFollow[]>([]);
+    const [query, setQuery] = useState<string>("");
 
     const fetchFolloweeList = async () => {
         setLoading(true)
@@ -74,6 +75,7 @@ export default function MyFollowing() {
     }
 
     const filterListByQuery = (query: string) => {
+        setQuery(query)
         const filteredList:UserDTOWithFollow[] = followeeList?.filter(user => (user.nickname.includes(query)||user.username.includes(query)))
         setProcessedList(filteredList)
     }
@@ -96,10 +98,8 @@ export default function MyFollowing() {
         <div className="space-y-4">
 
             <h2 className="text-xl font-bold">我的关注</h2>
-            <div className="flex justify-between items-center mb-3">
-                
-
-                <div className="flex justify-center flex-1 mr-3">
+            <div className="flex flex-col justify-between mb-3">
+                <div className="flex justify-center flex-1 mr-3 mb-3">
                     <label className="input flex items-center gap-4 w-full">
                         <svg className="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <g
@@ -113,13 +113,32 @@ export default function MyFollowing() {
                             <path d="m21 21-4.3-4.3"></path>
                             </g>
                         </svg>
-                        <input onChange={(e) => filterListByQuery(e.target.value)} type="search" className="grow" placeholder="搜索关注" />
+                        <input onChange={(e) => filterListByQuery(e.target.value)} type="search" className="grow" placeholder="搜索关注" value={query} />
+                        {query && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                filterListByQuery('');
+                            }}
+                            className="absolute right-2 btn btn-ghost btn-xs btn-circle opacity-50 hover:opacity-100"
+                        >
+                            {/* 关闭图标 */}
+                            <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            viewBox="0 0 20 20" 
+                            fill="currentColor" 
+                            className="w-4 h-4"
+                            >
+                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                            </svg>
+                        </button>
+                        )}
                     </label>
                 </div>
                 <div>
                     <span className="font-semibold">排序：</span>
                     <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto">
-                        <li className="m-1 w-auto">
+                        <li className="m-1 w-auto" key="nickname">
                             <a
                                 className={sortedBy === "nickname" ? "menu-active" : ""}
                                 onClick={()=>resortList("nickname")}
@@ -127,7 +146,7 @@ export default function MyFollowing() {
                                 昵称
                             </a>
                         </li>
-                        <li className="m-1 w-auto">
+                        <li className="m-1 w-auto" key="followTime">
                             <a 
                                 className={sortedBy === "followTime" ? "menu-active" : ""} 
                                 onClick={()=>resortList("followTime")}

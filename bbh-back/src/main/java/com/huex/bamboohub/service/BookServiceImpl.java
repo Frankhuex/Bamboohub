@@ -3,6 +3,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
 
@@ -23,23 +25,32 @@ public class BookServiceImpl implements BookService {
     @Autowired private JwtUtil jwtUtil;
     @Autowired private RoleUtil roleUtil;
     @Autowired private RoleService roleService;
+    @Autowired private CacheManager cacheManager;
 
     @Override
     @CacheEvict(value = "books", allEntries = true)
     public BookDTO addNewBook(String token, BookReq bookReq) throws IllegalArgumentException {
+        User owner=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
+        if (owner==null) throw new IllegalArgumentException("Invalid token.");
+
         Book book=bookConverter.toDAO(bookReq);
         Book savedBook=bookRepo.save(book);
 
         Paragraph startPara=new Paragraph();
         startPara.setBook(savedBook);
-        Paragraph savedPara=paraRepo.save(startPara);
-        
-        savedBook.setStartPara(savedPara);
-        paraRepo.save(savedPara);
-        bookRepo.save(savedBook);
+        Paragraph savedStartPara=paraRepo.save(startPara);
+        savedBook.setStartPara(savedStartPara);
 
-        User owner=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
-        if (owner==null) throw new IllegalArgumentException("Invalid token.");
+
+        Paragraph endPara=new Paragraph();
+        endPara.setBook(savedBook);
+        Paragraph savedEndPara=paraRepo.save(endPara);
+        savedBook.setEndPara(savedEndPara);
+
+        paraRepo.save(savedStartPara);
+        paraRepo.save(savedEndPara);
+        savedBook=bookRepo.save(savedBook);
+
         roleService.putRoleWithoutToken(owner, savedBook, Role.RoleType.OWNER);
 
         return bookConverter.toDTO(savedBook);
@@ -54,10 +65,9 @@ public class BookServiceImpl implements BookService {
         if (!roleUtil.generalCanViewBook(token,book)) {
             throw new IllegalArgumentException("No permission to access book.");
         }
-        System.out.println(book);
+
         return bookConverter.toDTO(book);
     }
-
 
     @Override
     // Books where you have a role
@@ -162,6 +172,19 @@ public class BookServiceImpl implements BookService {
             throw new IllegalArgumentException("No permission to delete book.");
         }
         bookRepo.deleteById(id);
+
+        Cache cache=cacheManager.getCache("rolesOfBook");
+        if (cache != null) {
+            cache.evict("bookId:"+book.getId());
+        }
+        cache=cacheManager.getCache("paraIdsOfBook");
+        if (cache != null) {
+            cache.evict("bookId:"+book.getId());
+        }
+        cache=cacheManager.getCache("parasOfBook");
+        if (cache != null) {
+            cache.evict("bookId:"+book.getId());
+        }
         return true;
     }
 

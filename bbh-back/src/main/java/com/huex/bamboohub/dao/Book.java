@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import jakarta.persistence.*;
@@ -48,7 +50,7 @@ public class Book {
     private Scope scope;
 
     //以下两个是必要的
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL,orphanRemoval=true)
+    @OneToMany(mappedBy = "book", cascade=CascadeType.ALL,orphanRemoval=true)
     private List<Role> roles;
 
     @OneToMany(mappedBy="book",cascade=CascadeType.ALL,orphanRemoval=true)
@@ -59,5 +61,4 @@ public class Book {
         this.title = title;
         this.scope = scope;
     }
-
 }

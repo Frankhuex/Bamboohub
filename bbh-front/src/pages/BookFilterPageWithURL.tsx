@@ -13,17 +13,19 @@ export default function BookFilterPageWithURL({url="plaza",defaultClassifiedBy="
     const [error, setError]=useState<string|null>(null)
 
     const fetchBooks = async () => {
+        setLoading(true)
         try {
             const response: ResponseData<BookDTOWithRole[]> = await httpService.empty<BookDTOWithRole[]>(`/books/${url}`, "GET")
             if (response.success===false) {
                 setError(response.errorMsg)
                 return
             }
-            console.log(response.data)
             setBooks(response.data)
         } catch (error) {
             if (error instanceof Error)
                 setError(error.message)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -42,11 +44,11 @@ export default function BookFilterPageWithURL({url="plaza",defaultClassifiedBy="
     if (loading) return <div className="fixed inset-0 flex"><span className="loading loading-spinner loading-xl m-auto"></span></div>
     if (error) {
         if (!localStorage.getItem("token")) {
-            return <div className="text-center py-4 text-error">登录后可查看</div>
+            return <div className="text-center py-4 text-error">请先登录</div>
         }
         return <div className="text-center py-4 text-error">{error}</div>
     }
     
 
-    return (<BookFilterPage books={books} defaultClassifiedBy={defaultClassifiedBy} defaultSortedBy={defaultSortedBy} />)
+    return (<BookFilterPage books={books} defaultClassifiedBy={defaultClassifiedBy} defaultSortedBy={defaultSortedBy} name={url} />)
 }

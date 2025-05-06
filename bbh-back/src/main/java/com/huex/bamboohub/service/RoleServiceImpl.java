@@ -13,6 +13,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -56,6 +57,28 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @CacheEvict(value="rolesOfBook", key="'bookId:'+#rolesReq.getBookId()")
+    public List<RoleDTO> putRolesAsViewer(String token, RolesAsViewerReq rolesReq) {
+        User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));
+        Book book=bookRepo.findById(rolesReq.getBookId()).orElseThrow(() -> new IllegalArgumentException("Book not found"));
+        if (!roleUtil.generalCanViewBook(token, book)) {
+            throw new IllegalArgumentException("No permission to access book");
+        }
+        List<RoleDTO> result=new ArrayList<>();
+        for (Long userId: rolesReq.getUserIds()) {
+            User viewer=userRepo.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+            Role role=roleRepo.findByUserAndBook(viewer,book).orElse(null);
+            if (role==null) {
+                role = new Role(viewer, book, RoleType.VIEWER);
+                roleRepo.save(role);
+                result.add(roleConverter.toDTO(role));
+            }
+        }
+        return result;
+    }
+
+
+    @Override
     public RoleDTO updateRole(String token, Long roleId, Role.RoleType newRoleType) {
         //不能给被操作者赋予owner权限
         if (newRoleType==RoleType.OWNER) {throw new IllegalArgumentException("Cannot assign owner role");}
@@ -67,7 +90,7 @@ public class RoleServiceImpl implements RoleService {
         User employee=role.getUser();
 
         // Check permission
-        if (roleUtil.hasRoleCanAdmin(token,book)) {throw new IllegalArgumentException("No permission to assign role");}
+        if (!roleUtil.hasRoleCanAdmin(token,book)) {throw new IllegalArgumentException("No permission to assign role");}
 
         // Check if employee already has role
         if (!roleUtil.hasAnyRole(employee,book)) {throw new IllegalArgumentException("User"+employee.getId()+" has no role");}
@@ -133,10 +156,7 @@ public class RoleServiceImpl implements RoleService {
     public RolesDTO getRolesByBookId(String token, Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(() -> new IllegalArgumentException("Book not found"));
-        if ((book.getScope()==Book.Scope.PRIVATE
-                || book.getScope()==Book.Scope.ALLSEARCH
-            ) && !roleUtil.hasRoleCanView(token,book))
-        {
+        if (!roleUtil.generalCanViewBook(token, book)) {
             throw new IllegalArgumentException("No permission to access book");
         }
         List<Role> roles=roleRepo.findByBook(book);
@@ -144,13 +164,14 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public RoleType getOwnRoleByBookId(String token, Long bookId) {
+    public RoleDTO getOwnRoleByBookId(String token, Long bookId) {
+        User user=jwtUtil.parseUser(token).orElse(null);
+        if (user==null) { return null; }
         Book book=bookRepo.findById(bookId)
             .orElseThrow(() -> new IllegalArgumentException("Book not found"));
-        if (!roleUtil.hasAnyRole(token,book)) {
-            throw new IllegalArgumentException("No role");
-        }
-        return roleUtil.getRoleType(token,book);
+        Role role=roleRepo.findByUserAndBook(user,book).orElse(null);
+        if (role==null) { return null; }
+        return roleConverter.toDTO(role);
     }
 
     @Override

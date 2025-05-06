@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { toChinese, utc2current } from "../utils/util";
+import { Link } from "react-router-dom";
 
 interface BookFilterProps {
     books: BookDTOWithRole[] | null;
@@ -48,20 +49,30 @@ const filterAndClassifyBooks = (
 };
 
 const BookItem = ({ book }: { book: BookDTOWithRole }) => (
-  <li className="list-row" key={book.id}>
-    <div> {/* 图片容器 */}
-        <img 
-            className="size-10 rounded-box" 
-            src="https://img.daisyui.com/images/profile/demo/1@94.webp" 
-            alt={book.title}
-        />
-    </div>
-    <div>
-        <div>{book.title}</div>
-        <div className="text-xs font-semibold opacity-60">{toChinese(book.scope)+" "+toChinese(book.roleType)}</div>
-        <div className="text-xs font-semibold opacity-60">创建于{utc2current(book.createTime)}</div>
-    </div>
-  </li>
+  
+    <Link to={`/reading/${book.id}`} draggable="false"
+        className="list-row 
+        active:bg-gray-200 
+        hover-hover:hover:bg-gray-50
+        transition-colors 
+        duration-100
+        cursor-pointer"
+        key={book.id}>
+            <div> {/* 图片容器 */}
+                <img 
+                    className="size-10 rounded-box" 
+                    src="https://img.daisyui.com/images/profile/demo/1@94.webp" 
+                    alt={book.title}
+                />
+            </div>
+            <div>
+                <div>{book.title}</div>
+                <div className="text-xs font-semibold opacity-60">{toChinese(book.scope)+" "+toChinese(book.roleType)}</div>
+                <div className="text-xs font-semibold opacity-60">{utc2current(book.createTime)}</div>
+            </div>
+    </Link>
+    
+  
 );
 
 const GroupTab = ({ group, label, isFirst }: { 
@@ -78,16 +89,10 @@ const GroupTab = ({ group, label, isFirst }: {
                 aria-label={label}
                 defaultChecked={isFirst} 
             />
-            <div className="tab-content border-base-300 bg-base-100 p-10">
-               
-                <div className="space-y-4 mb-16">
-                    <div>
-                        <h2 className="text-xl font-bold mb-2">{label}</h2>
-                        <ul className="list bg-base-100 rounded-box shadow-md">
-                            {group.map(book => <BookItem key={book.id} book={book} />)}
-                        </ul>
-                    </div>
-                </div>
+            <div className="tab-content border-base-300 bg-base-100 p-0 space-y-4">
+                <ul className="list bg-base-100 rounded-box shadow-md">
+                    {group.map(book => <BookItem key={book.id} book={book} />)}
+                </ul>
             </div>
         </>
     )
@@ -103,7 +108,7 @@ export default function BookFilter({ books, query, sortedBy, classifiedBy }: Boo
     if (groups.every(g => g.length === 0)) return <div className="text-center py-8">暂无数据</div>;
 
     return (
-        <div className="tabs tabs-box mx-auto w-full flex justify-center lg:flex-none lg:justify-start mt-10">
+        <div className="tabs tabs-lift mx-auto w-full flex flex-none justify-start mt-10">
             {groups.map((group, index) => {
                 const label = (classifiedBy==='null'
                     ?'全部':(classifiedBy === 'scope' 

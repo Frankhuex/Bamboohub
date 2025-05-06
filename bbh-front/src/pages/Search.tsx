@@ -22,7 +22,6 @@ export default function Search() {
                 setLoading(false)
                 return
             }
-            console.log(response.data)
             setBooks(response.data)
         } catch (error) {
             if (error instanceof Error)
@@ -41,7 +40,6 @@ export default function Search() {
                 setLoading(false)
                 return
             }
-            console.log(response.data)
             setUsers(response.data)
         } catch (error) {
             if (error instanceof Error)
@@ -77,6 +75,25 @@ export default function Search() {
                     </g>
                 </svg>
                 <input onChange={(e) => setQuery(e.target.value)} type="search" className="grow" placeholder="搜索" value={query?query:""} />
+                {query && (
+                <button
+                    type="button"
+                    onClick={() => {
+                        setQuery('');
+                    }}
+                    className="absolute right-2 btn btn-ghost btn-xs btn-circle opacity-50 hover:opacity-100"
+                >
+                    {/* 关闭图标 */}
+                    <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    viewBox="0 0 20 20" 
+                    fill="currentColor" 
+                    className="w-4 h-4"
+                    >
+                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                    </svg>
+                </button>
+                )}
             </label>
             <button onClick={() => searchData()} className="btn btn-neutral rounded-l-none px-6 h-auto border-l-0" type="submit">
                 搜索
@@ -86,21 +103,21 @@ export default function Search() {
             <div className="flex items-center gap-2">
                 <span className="font-semibold">搜索类型：</span>
                 <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto md:w-auto">
-                    <li className="w-auto m-1 md:w-auto">
+                    <li className="w-auto m-1 md:w-auto" key="book">
                         <a
                             className={type === "book" ? "menu-active" : ""}
                             onClick={() => { setType("book") }}>
                             书名
                         </a>
                     </li>
-                    <li className="w-auto m-1 md:w-auto">
+                    <li className="w-auto m-1 md:w-auto" key="paragraph">
                         <a 
                             className={type === "paragraph" ? "menu-active" : ""} 
                             onClick={() => { setType("paragraph") }}>
                             段落
                         </a>
                     </li>
-                    <li className="w-auto m-1 md:w-auto">
+                    <li className="w-auto m-1 md:w-auto" key="user">
                         <a
                             className={type === "user" ? "menu-active" : ""} 
                             onClick={() => { setType("user") }}>

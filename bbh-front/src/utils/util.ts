@@ -1,6 +1,6 @@
 export function utc2current(utc: Date): string {
     const cur: Date=new Date(utc);
-    return cur.toLocaleString("zh-CN");
+    return cur.toLocaleDateString("zh-CN");
 }
 
 export function toChinese(scope: string|null) {
