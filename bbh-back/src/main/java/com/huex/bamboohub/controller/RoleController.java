@@ -1,25 +1,36 @@
 package com.huex.bamboohub.controller;
 
 import com.huex.bamboohub.dto.RoleDTO;
+import com.huex.bamboohub.request.RolesAsViewerReq;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.web.bind.annotation.*;
 
 
-import com.huex.bamboohub.converter.UserConverter;
 import com.huex.bamboohub.request.RoleReq;
 import com.huex.bamboohub.service.*;
-import com.huex.bamboohub.util.JwtUtil;
 import com.huex.bamboohub.dto.RolesDTO;
 import com.huex.bamboohub.dao.Role.RoleType;
+
+import java.util.List;
 
 @RestController
 public class RoleController {
     @Autowired private RoleService roleService;
 
-    @PostMapping("/bookRole")
+    @PostMapping("/bookRoleOne")
     public Response<RoleDTO> putRole(@RequestHeader("Authorization") String token, @RequestBody RoleReq roleReq) {
         try {
             return Response.newSuccess(roleService.putRole(token, roleReq));
+        } catch (Exception e) {
+            return Response.newFail(e.getMessage());
+        }
+    }
+
+    @PostMapping("/bookRole")
+    public Response<List<RoleDTO>> putRoles(@RequestHeader("Authorization") String token, @RequestBody RolesAsViewerReq rolesReq) {
+        try {
+            return Response.newSuccess(roleService.putRolesAsViewer(token, rolesReq));
         } catch (Exception e) {
             return Response.newFail(e.getMessage());
         }
@@ -44,7 +55,7 @@ public class RoleController {
     }
 
     @GetMapping("/book/{bookId}/roles")
-    public Response<RolesDTO> getRoles(@RequestHeader("Authorization") String token, @PathVariable Long bookId) {
+    public Response<RolesDTO> getRoles(@RequestHeader(value="Authorization",required=false) String token, @PathVariable Long bookId) {
         try {
             return Response.newSuccess(roleService.getRolesByBookId(token, bookId));
         } catch (Exception e) {
@@ -52,8 +63,8 @@ public class RoleController {
         }
     }
 
-    @GetMapping("/book/{bookId}/ownRole")
-    public Response<RoleType> getOwnRole(@RequestHeader("Authorization") String token, @PathVariable Long bookId) {
+    @GetMapping("/book/{bookId}/myRole")
+    public Response<RoleDTO> getMyRole(@RequestHeader("Authorization") String token, @PathVariable Long bookId) {
         try {
             return Response.newSuccess(roleService.getOwnRoleByBookId(token, bookId));
         } catch (Exception e) {

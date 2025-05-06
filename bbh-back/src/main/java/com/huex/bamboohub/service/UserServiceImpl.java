@@ -31,6 +31,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTOWithToken register(RegisterReq regReq) throws IllegalArgumentException {
+        String username=regReq.getUsername();
+        String password=regReq.getPassword();
+        if (!StringUtils.hasText(username) ||!StringUtils.hasText(password)) {
+            throw new IllegalArgumentException("Username and password must not be empty.");
+        }
         if (userRepo.existsByUsername(regReq.getUsername())) {
             throw new IllegalArgumentException("Username already exists.");
         }
@@ -91,6 +96,10 @@ public class UserServiceImpl implements UserService {
         if (cache1!=null) cache1.evict("user:"+user.getId());
         Cache cache2=cacheManager.getCache("userFollow");
         if (cache2!=null) cache2.clear();
+        Cache cache3=cacheManager.getCache("rolesOfBook");
+        if (cache3!=null) cache3.clear();
+        Cache cache4=cacheManager.getCache("rolesOfParagraph");
+        if (cache4!=null) cache4.clear();
 
         return userConverter.toDTO(userRepo.save(user));
     }

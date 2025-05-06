@@ -52,6 +52,11 @@ export interface RoleReq {
     roleType: "OWNER"|"ADMIN"|"EDITOR"|"VIEWER"
 }
 
+export interface RolesAsViewerReq {
+    bookId: number;
+    userIds: number[];
+}
+
 export interface UserUpdateReq {
     username: string;
     nickname: string;

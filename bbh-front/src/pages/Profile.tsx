@@ -20,27 +20,33 @@ export default function Profile() {
     const [changingUsnPwd, setChangingUsnPwd]=useState<boolean>(false)
 
     const fetchProfile = async () => {
+        setLoading(true)
         try {
             const response:ResponseData<UserDTO>=await httpService.empty<UserDTO>("/myProfile",'GET')
             if (response.success===false) {
                 setError(response.errorMsg)
+                setLoggedIn(false)
                 return
             }
             setUserDTO(response.data)
         } catch (e) {
             if (e instanceof Error)
                 setError(e.message)
+        } finally {
+            setLoading(false)
         }
     }
 
     const logout = () => {
+        setLoading(true)
         localStorage.removeItem("token")
         setLoggedIn(false)
+        setLoading(false)
     }
 
     const handleUpdateNickname = async (newNickname: string) => {
+        setLoading(true)
         try {
-            setLoading(true)
             const userUpdateReq:UserUpdateReq={
                 nickname: newNickname,
                 username: ""
@@ -49,7 +55,6 @@ export default function Profile() {
             if (response.success===true) {
                 setUserDTO(response.data)
             }
-            setChangingNickname(false)
         } catch (e) {
             if (e instanceof Error) 
                 setError(e.message)
@@ -90,7 +95,7 @@ export default function Profile() {
         <div className="flex-1">
             <div className="bg-base-100 border-base-300 border rounded-box">
                 {/* <input type="checkbox" /> */}
-                <div className="mt-5 grid place-content-center text-[clamp(3rem,5vw,5rem)] font-black">
+                <div className="m-5 grid place-content-center text-[clamp(3rem,5vw,5rem)] font-black text-center">
                     Hello, {userDTO?.nickname}!
                 </div>
                 {changingNickname===true && 
@@ -108,24 +113,26 @@ export default function Profile() {
                     </button>
                   </div>)
                 }
-                <div className=" text-sm flex justify-center text-xs font-semibold opacity-60">
-                    @{userDTO?.username}
-                    <a onClick={() => setChangingNickname(true)} className="link ml-3">修改昵称</a>
-                </div>
-                {userDTO && <div className="mb-5 mt-3 text-sm flex justify-center text-xs font-semibold opacity-60">
-                    注册于{utc2current(userDTO?.createTime)}
+                {userDTO && <div>
+                    <div className="text-sm flex justify-center text-xs font-semibold opacity-60">
+                        @{userDTO?.username}
+                        <div className="ml-2">
+                            注册于{utc2current(userDTO?.createTime)}
+                        </div>
+                    </div>
+                    <div className="mb-5 mt-3 text-sm flex justify-center text-xs font-semibold opacity-60">
+                        <a onClick={() => setChangingNickname(true)} className="link ml-3">修改昵称</a>
+                    </div>
                 </div>}
-                <p className="text-red-500">{error}</p>
-                
-                
+                <p className="text-red-500">{error}</p> 
             </div>
             <div className="mt-10">
                 <MyFollowing />
             </div>
         </div>
-        <div className="grid place-content-center p-4 bottom-0 bg-base-10 mb-40">
+        <div className="grid place-content-center p-4 bottom-0 bg-base-10 mb-20 mt-10">
             <button onClick={() => setChangingUsnPwd(true)} className="btn w-full max-w-xs mb-5">修改账密</button>
-            <button onClick={logout} className="btn w-full max-w-xs">退出登录</button>
+            <button onClick={logout} className="btn w-full max-w-xs text-error">退出登录</button>
         </div>
     </div>)
     
