@@ -61,3 +61,4 @@ export interface UserUpdateReq {
     username: string;
     nickname: string;
 }
+

@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
     @Autowired private JwtUtil jwtUtil;
     @Autowired private FollowConverter followConverter;
     @Autowired private FollowRepo followRepo;
-    @Autowired private CacheManager cacheManager;
+    @Autowired private CacheUtil cacheUtil;
     @Autowired private UserServiceCache userServiceCache;
 
     @Override
@@ -92,14 +92,7 @@ public class UserServiceImpl implements UserService {
         if (StringUtils.hasText(newNickname) && !oldNickname.equals(newNickname))
             user.setNickname(userUpdateReq.getNickname());
 
-        Cache cache1=cacheManager.getCache("users");
-        if (cache1!=null) cache1.evict("user:"+user.getId());
-        Cache cache2=cacheManager.getCache("userFollow");
-        if (cache2!=null) cache2.clear();
-        Cache cache3=cacheManager.getCache("rolesOfBook");
-        if (cache3!=null) cache3.clear();
-        Cache cache4=cacheManager.getCache("rolesOfParagraph");
-        if (cache4!=null) cache4.clear();
+        cacheUtil.clearCache(List.of("users","userFollow","rolesOfBook","rolesOfPara"));
 
         return userConverter.toDTO(userRepo.save(user));
     }
@@ -126,7 +119,7 @@ public class UserServiceImpl implements UserService {
         List<UserDTOWithFollow> usersWithFollow=new ArrayList<>();
         User user=jwtUtil.parseUser(token).orElse(null);
         for (User target: users) {
-            if (user==null) usersWithFollow.add(userConverter.toDTOWithFollow(user,null));
+            if (user==null) usersWithFollow.add(userConverter.toDTOWithFollow(target,null));
             else {
                 Follow follow=followRepo.findBySourceAndTarget(user, target).orElse(null);
                 usersWithFollow.add(userConverter.toDTOWithFollow(target,follow));
@@ -149,8 +142,7 @@ public class UserServiceImpl implements UserService {
         Follow follow=followRepo.findBySourceAndTarget(user, target).orElse(new Follow(user, target));
         Follow savedFollow=followRepo.save(follow);
 
-        Cache cache=cacheManager.getCache("userFollow");
-        if (cache!=null) cache.clear();
+        cacheUtil.clearCache("userFollow");
 
         return followConverter.toDTO(savedFollow);
     }
@@ -162,8 +154,7 @@ public class UserServiceImpl implements UserService {
         User target=userRepo.findById(targetId).orElseThrow(() -> new IllegalArgumentException("User not found."));
         followRepo.findBySourceAndTarget(user, target).ifPresent(follow -> followRepo.delete(follow));
 
-        Cache cache=cacheManager.getCache("userFollow");
-        if (cache!=null) cache.clear();
+        cacheUtil.clearCache("userFollow");
 
         return true;
     }

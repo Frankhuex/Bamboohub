@@ -77,50 +77,53 @@ export default function CreateBook() {
 
 
     const createBookCard=(
-        <div className="flex justify-center w-full">
-            <form className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4"
+        <div className="flex justify-center w-full mt-4">
+            <form className="fieldset bg-base-200 border-base-300 border shadow rounded-box w-full md:w-90 flex border p-4 justify-center items-center flex-col"
                 onSubmit={(e)=>{e.preventDefault();createBook()}}>
                 <legend className="fieldset-legend">创建书籍</legend>
+                
+                <div className="w-70">
+                    <label className="label mb-2 mt-2">书名</label>
+                    <input onChange={(e) => setTitleAndSave(e.target.value)} type="text" className="input" placeholder="书名" value={title?title:""} />
+                </div>
 
-                <label className="label">书名</label>
-                <input onChange={(e) => setTitleAndSave(e.target.value)} type="text" className="input" placeholder="书名" value={title?title:""} />
+                <div className="w-70">
+                    <label className="label mt-4">权限</label>
+                    <div className="flex items-center gap-2">
+                        <ul className="menu menu-vertical  rounded-box w-full shadow">
+                            <li className="m-1 w-auto" key="private">
+                                <a 
+                                    className={scope === "PRIVATE" ? "menu-active" : ""} 
+                                    onClick={() => { setScopeAndSave("PRIVATE") }}>
+                                    私密：仅指定人可访问
+                                </a>
+                            </li>
 
+                            <li className="m-1 w-auto" key="allsearch">
+                                <a 
+                                    className={scope === "ALLSEARCH" ? "menu-active" : ""} 
+                                    onClick={() => { setScopeAndSave("ALLSEARCH") }}>
+                                    公开搜索：所有人可搜索到书名
+                                </a>
+                            </li>
 
-                <label className="label mt-4">权限</label>
-                <div className="flex items-center gap-2">
-                    <ul className="menu menu-vertical bg-base-200 rounded-box w-auto">
-                        <li className="m-1 w-auto" key="private">
-                            <a 
-                                className={scope === "PRIVATE" ? "menu-active" : ""} 
-                                onClick={() => { setScopeAndSave("PRIVATE") }}>
-                                私密：仅指定人可访问
-                            </a>
-                        </li>
+                            <li className="m-1 w-auto" key="allread">
+                                <a 
+                                    className={scope === "ALLREAD" ? "menu-active" : ""} 
+                                    onClick={() => { setScopeAndSave("ALLREAD") }}>
+                                    公开阅读：所有人可阅读
+                                </a>
+                            </li>
 
-                        <li className="m-1 w-auto" key="allsearch">
-                            <a 
-                                className={scope === "ALLSEARCH" ? "menu-active" : ""} 
-                                onClick={() => { setScopeAndSave("ALLSEARCH") }}>
-                                公开搜索：所有人可搜索到书名
-                            </a>
-                        </li>
-
-                        <li className="m-1 w-auto" key="allread">
-                            <a 
-                                className={scope === "ALLREAD" ? "menu-active" : ""} 
-                                onClick={() => { setScopeAndSave("ALLREAD") }}>
-                                公开阅读：所有人可阅读
-                            </a>
-                        </li>
-
-                        <li className="m-1 w-auto" key="alledit">
-                            <a 
-                                className={scope === "ALLEDIT" ? "menu-active" : ""} 
-                                onClick={() => { setScopeAndSave("ALLEDIT") }}>
-                                公开编辑：所有人可编辑
-                            </a>
-                        </li>
-                    </ul>
+                            <li className="m-1 w-auto" key="alledit">
+                                <a 
+                                    className={scope === "ALLEDIT" ? "menu-active" : ""} 
+                                    onClick={() => { setScopeAndSave("ALLEDIT") }}>
+                                    公开编辑：所有人可编辑
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 <button className="btn btn-neutral mt-4" type="submit" >创建</button>

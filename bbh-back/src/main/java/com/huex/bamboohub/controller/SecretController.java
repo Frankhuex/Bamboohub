@@ -19,7 +19,7 @@ import java.util.List;
 public class SecretController {
     @Autowired private ParagraphRepo paragraphRepo;
     @Autowired private BookRepo bookRepo;
-    @PostMapping("/secret/books/add-end-para")
+//    @PostMapping("/secret/books/add-end-para")
     public Response<List<Long>> addEndPara() {
         try {
             List<Book> books=bookRepo.findAll();

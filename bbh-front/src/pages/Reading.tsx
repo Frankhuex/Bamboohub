@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import BookInfo from "../components/BookInfo";
 import BookRoles from "../components/BookRoles";
 import { useParams } from "react-router-dom";
+import Paragraphs from "../components/Paragraphs";
 
 export default function Reading() {
     const { bookId } = useParams<{ bookId?: string }>();
@@ -21,6 +22,7 @@ export default function Reading() {
     <div className="mb-40">
         <BookInfo bookId={Number(bookId)} myRole={myRole} setBookOut={setBookDTO} />
         <BookRoles bookId={Number(bookId)} setRoleOut={setMyRole} />
+        <Paragraphs bookId={Number(bookId)} bookDTO={bookDTO} myRole={myRole} />
     </div>
     </>)
 }

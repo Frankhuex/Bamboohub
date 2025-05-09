@@ -26,7 +26,7 @@ public class RoleServiceImpl implements RoleService {
     @Autowired private RoleUtil roleUtil;
     @Autowired private JwtUtil jwtUtil;
     @Autowired private RoleConverter roleConverter;
-    @Autowired private CacheManager cacheManager;
+    @Autowired private CacheUtil cacheUtil;
 
     @Override
     @CacheEvict(value="rolesOfBook", key="'bookId:'+#roleReq.getBookId()")
@@ -48,7 +48,7 @@ public class RoleServiceImpl implements RoleService {
         if (roleUtil.hasRoleCanAdmin(token,book)) {throw new IllegalArgumentException("No permission to assign role");}
 
         // Check if employee already has role
-        if (roleUtil.hasAnyRole(employee,book)) {throw new IllegalArgumentException("Alread has role");}
+        if (roleUtil.hasAnyRole(employee,book)) {throw new IllegalArgumentException("Already has role");}
 
         Role newRole=roleConverter.toDAO(roleReq);
         Role savedRole=roleRepo.save(newRole);
@@ -113,10 +113,7 @@ public class RoleServiceImpl implements RoleService {
         role.setRoleType(newRoleType);
         Role savedRole=roleRepo.save(role);
 
-        Cache cache=cacheManager.getCache("rolesOfBook");
-        if (cache!=null) {
-            cache.evict("bookId:"+book.getId());
-        }
+        cacheUtil.clearCache("rolesOfBook", "bookId:"+book.getId());
 
         return roleConverter.toDTO(savedRole);
     }
@@ -128,10 +125,7 @@ public class RoleServiceImpl implements RoleService {
         deleteRoleByBookIdAndEmployee(token, role.getBook().getId(), role.getUser());
 
         // Clear cache of roles of book
-        Cache cache=cacheManager.getCache("rolesOfBook");
-        if (cache!=null) {
-            cache.evict("bookId:"+role.getBook().getId());
-        }
+        cacheUtil.clearCache("rolesOfBook", "bookId:"+role.getBook().getId());
         return true;
     }
 

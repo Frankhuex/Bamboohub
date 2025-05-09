@@ -81,7 +81,7 @@ export default function BookInfo({bookId=14, myRole=null, setBookOut}:BookInfoPr
     }
     
     const handleDeleteBook = async () => {
-        window.confirm(`确定要删除《${book?.title}》吗？`)
+        if (!window.confirm(`确定要删除《${book?.title}》吗？`)) return
         setLoading(true)
         try {
             const response:ResponseData<boolean>=await httpService.empty<boolean>(`/book/${bookId}`,'DELETE')
@@ -159,7 +159,7 @@ export default function BookInfo({bookId=14, myRole=null, setBookOut}:BookInfoPr
                 </div>
                 <div className="flex flex-row justify-between gap-2 mt-4 w-full">
                     {myRole && myRole.roleType==="OWNER" ?
-                    (<><button className="btn btn-error mt-4 w-35" type="button" 
+                    (<><button className="btn btn-neutral text-error mt-4 w-35" type="button" 
                         onClick={handleDeleteBook}>删除</button>
                     <button className="btn btn-neutral mt-4 w-35" type="submit" >保存</button>
                     </>):(<>
@@ -178,7 +178,7 @@ export default function BookInfo({bookId=14, myRole=null, setBookOut}:BookInfoPr
     return (
     <div className="pb-4">
         <div className="flex-1">
-            <div className="bg-base-100 border-base-300 border rounded-box">
+            <div className="bg-base-100 border-base-300 shadow-xs border rounded-box">
                 <div className="m-5 grid place-content-center text-[clamp(3rem,5vw,5rem)] font-black text-center">
                     {book?.title}
                 </div>

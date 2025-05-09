@@ -39,7 +39,7 @@ public class ParaRoleController {
     }
 
     @GetMapping("/paragraph/{paraId}/paraRoles")
-    public Response<ParaRolesDTO> getParaRole(@RequestHeader("Authorization") String token, @PathVariable("paraId") Long paraId) {
+    public Response<ParaRolesDTO> getParaRole(@RequestHeader(value="Authorization",required=false) String token, @PathVariable("paraId") Long paraId) {
         try {
             return Response.newSuccess(paraRoleService.getParaRolesByParaId(token, paraId));
         } catch (Exception e) {

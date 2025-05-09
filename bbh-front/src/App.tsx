@@ -31,13 +31,13 @@ function App() {
 
       <div className="flex flex-1 pt-16">
         {/* 统一侧边栏背景 */}
-        <aside className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 z-40 bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-sm">
+        <aside className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 z-40 backdrop-blur-sm">
           <SideMenu />
         </aside>
 
         {/* 主内容区背景调整 */}
         <main className="flex-1 overflow-y-auto h-[calc(100vh-4rem)]">
-          <div className="mx-auto p-4 max-w-4xl lg:ml-[max(16rem,calc(50%-28rem))] bg-white/50 dark:bg-gray-800/80 backdrop-blur-sm">
+          <div className="mx-auto p-0 max-w-4xl lg:ml-[max(16rem,calc(50%-28rem))] backdrop-blur-sm mt-4 md:p-4">
             <Routes>
               <Route path="/" element={<Navigate to="/plaza" replace />} />
               {pageRoutes.map(({ path, component: Component }) => 

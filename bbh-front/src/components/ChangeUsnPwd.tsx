@@ -67,11 +67,11 @@ export default function ChangeUsnPwd({setChangingUsnPwd}:Props) {
 
     const changeUsernameCard=(
         <div className="flex justify-center w-full">
-            <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+            <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-full md:w-xs border p-4">
                 <legend className="fieldset-legend">修改用户名</legend>
 
                 <label className="label">新用户名</label>
-                <input onChange={(e)=>setUsername(e.target.value)} type="text" className="input" placeholder="用户名" />
+                <input onChange={(e)=>setUsername(e.target.value)} type="text" className="input w-full" placeholder="用户名" />
 
                 <button onClick={()=>changeUsername()} className="btn btn-neutral mt-4">修改</button>
                 <p className="text-red-500">{error}</p>
@@ -81,19 +81,19 @@ export default function ChangeUsnPwd({setChangingUsnPwd}:Props) {
 
     const changePwdCard=(
         <div className="flex justify-center w-full">
-            <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+            <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-full md:w-xs border p-4">
                 <legend className="fieldset-legend">修改密码</legend>
 
                 <label className="label"><strong>旧密码</strong><br /></label>
-                <input onChange={(e)=>setOldPwd(e.target.value)} type="password" className="input" placeholder="密码" />
+                <input onChange={(e)=>setOldPwd(e.target.value)} type="password" className="input w-full" placeholder="密码" />
 
 
                 <label className="label"><strong>新密码</strong><br /></label>
-                <input onChange={(e)=>setNewPwd(e.target.value)} type="password" className="input" placeholder="密码" />
+                <input onChange={(e)=>setNewPwd(e.target.value)} type="password" className="input w-full" placeholder="密码" />
 
                 <label className="label"><strong>确认新密码</strong><br /></label>
                 <p className="text-xs text-gray-500">· 请再次输入新密码</p>
-                <input onChange={(e)=>setConfirmNewPwd(e.target.value)} type="password" className="input" placeholder="确认密码" />
+                <input onChange={(e)=>setConfirmNewPwd(e.target.value)} type="password" className="input w-full" placeholder="确认密码" />
 
                 <button onClick={()=>changePassword()} className="btn btn-neutral mt-4">修改</button>
                 <p className="text-red-500">{error}</p>
@@ -115,7 +115,7 @@ export default function ChangeUsnPwd({setChangingUsnPwd}:Props) {
                     </div>
                 </div>
                 <div className="grid place-content-center p-4 bottom-0 bg-base-10 mb-40">
-                    <button onClick={() => setChangingUsnPwd(false)} className="btn w-full max-w-xs mb-5">取消</button>
+                    <button onClick={() => setChangingUsnPwd(false)} className="btn bg-base-200 border-base-300 border w-full max-w-xs mb-5 shadow">取消</button>
                 </div>
             </>)
 }

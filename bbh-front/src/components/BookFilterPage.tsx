@@ -59,7 +59,7 @@ export default function BookFilterPage({books,defaultClassifiedBy="null",default
 
     return (<div className="mb-20" >
         {showSearchBox && (
-        <div className="flex mt-7 justify-center">
+        <div className="flex mt-7 ml-4 mr-4 justify-center">
             <label className="input flex items-center gap-4 w-full">
                 <svg className="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <g
@@ -95,10 +95,10 @@ export default function BookFilterPage({books,defaultClassifiedBy="null",default
                 )}
             </label>
         </div>)}
-        <div className="flex justify-between gap-6 mt-7 flex-col md:flex-row"> {/* 增加间隙并居中对齐 */}
-            {showClassifiedBy && (<div className="flex items-center gap-2">
+        <div className="flex justify-between gap-6 mt-7 ml-4 mr-4 flex-col md:flex-row"> {/* 增加间隙并居中对齐 */}
+            {showClassifiedBy && (<div>
                 <span className="font-semibold">分类：</span>
-                <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto">
+                <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto shadow mt-2">
                     <li className="m-1 w-auto" key="null">
                         <a
                         className={classifiedBy === "null" ? "menu-active" : ""} 
@@ -127,9 +127,9 @@ export default function BookFilterPage({books,defaultClassifiedBy="null",default
             </div>)}
 
             {/* 排序选项组 */}
-            {showSortedBy && (<div className="flex items-center gap-2">
+            {showSortedBy && (<div>
                 <span className="font-semibold">排序：</span>
-                <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto">
+                <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto shadow mt-2">
                     <li className="m-1 w-auto" key="createTime">
                         <a 
                         className={sortedBy === "createTime" ? "menu-active" : ""} 

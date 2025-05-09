@@ -50,13 +50,14 @@ const filterAndClassifyBooks = (
 
 const BookItem = ({ book }: { book: BookDTOWithRole }) => (
   
-    <Link to={`/reading/${book.id}`} draggable="false"
+    <Link to={`/reading/${book.id}`} 
+        draggable="false"
         className="list-row 
-        active:bg-gray-200 
-        hover-hover:hover:bg-gray-50
-        transition-colors 
-        duration-100
-        cursor-pointer"
+            active:bg-base-200 
+            hover-hover:hover:bg-base-50
+            transition-colors 
+            duration-100
+            cursor-pointer"
         key={book.id}>
             <div> {/* 图片容器 */}
                 <img 
@@ -66,9 +67,9 @@ const BookItem = ({ book }: { book: BookDTOWithRole }) => (
                 />
             </div>
             <div>
-                <div>{book.title}</div>
-                <div className="text-xs font-semibold opacity-60">{toChinese(book.scope)+" "+toChinese(book.roleType)}</div>
-                <div className="text-xs font-semibold opacity-60">{utc2current(book.createTime)}</div>
+                <h3 className="font-semibold">{book.title}</h3>
+                <div className="text-xs opacity-60">{toChinese(book.scope)+" "+toChinese(book.roleType)}</div>
+                <div className="text-xs opacity-60">{utc2current(book.createTime)}</div>
             </div>
     </Link>
     
@@ -90,7 +91,7 @@ const GroupTab = ({ group, label, isFirst }: {
                 defaultChecked={isFirst} 
             />
             <div className="tab-content border-base-300 bg-base-100 p-0 space-y-4">
-                <ul className="list bg-base-100 rounded-box shadow-md">
+                <ul className="list bg-base-100 rounded-box shadow">
                     {group.map(book => <BookItem key={book.id} book={book} />)}
                 </ul>
             </div>

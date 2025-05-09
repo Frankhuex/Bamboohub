@@ -10,5 +10,5 @@ public interface ParaRoleRepo extends JpaRepository<ParaRole, Long> {
     boolean existsByUserAndParagraph(User user, Paragraph paragraph);
     List<ParaRole> findByUser(User user);
     List<ParaRole> findByParagraph(Paragraph paragraph);
-
+    boolean existsByUserAndParagraphAndRoleType(User user, Paragraph paragraph, ParaRole.RoleType roleType);
 }

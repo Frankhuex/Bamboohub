@@ -36,13 +36,22 @@ interface ParaRoleDTO {
     id: number;
     createTime: Date;
     paraId: number;
-    userId: number;
+    userDTO: UserDTO;
     roleType: "CREATOR"|"CONTRIBUTOR";
 }
 
 interface ParaRolesDTO {
     creators: ParaRoleDTO[];
     contributors: ParaRoleDTO[];
+}
+
+interface ParaSearchItem {
+    bookDTOWithRole: BookDTOWithRole;
+    paragraphDTOs: ParagraphDTO[];
+}
+
+interface ParaSearchDTO {
+    paraSearchItems: ParaSearchItem[];
 }
 
 interface RoleDTO {

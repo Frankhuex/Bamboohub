@@ -15,10 +15,10 @@ export default function UserList({userDTOs, setUserDTOs}: UserListProps) {
 
     const renderFolloweeItem = (user: UserDTOWithFollow) => {
         const followButton = (toggledId === user.id) 
-            ? (<button className="btn w-13 md:w-25">
+            ? (<button className="btn btn-square md:w-25">
                 <span className="loading loading-spinner loading-xl m-auto"></span>
             </button>)
-            : (<button onClick={() => toggleFollow(user.id)} className="btn w-13 md:w-25">
+            : (<button onClick={() => toggleFollow(user.id)} className="btn btn-square md:w-25">
                 <svg xmlns="http://www.w3.org/2000/svg" fill={user.followed===true ? 'currentColor' : "none"} viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="size-[1.2em]"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
                 <span className="hidden md:inline">{user.followed===true ? '已关注' : '关注'}</span>
             </button>)
@@ -32,12 +32,12 @@ export default function UserList({userDTOs, setUserDTOs}: UserListProps) {
                     />
                 </div>
                 <div>
-                    <div>{user.nickname}</div>
-                    <div className="text-xs font-semibold opacity-60">@{user.username}</div>
-                    {user.followed===true && user.followTime && <div className="text-xs uppercase font-semibold opacity-60">关注于{user.followTime && utc2current(user.followTime)}</div>}
+                    <h3 className="font-semibold">{user.nickname}</h3>
+                    <div className="text-xs opacity-60">@{user.username}</div>
+                    {user.followed===true && user.followTime && <div className="text-xs opacity-60">关注于{user.followTime && utc2current(user.followTime)}</div>}
                 </div>
                 <div className="mt-auto mb-auto">
-                {followButton}
+                    {localStorage.getItem('token') && followButton}
                 </div>
             </li>
         )
@@ -79,8 +79,8 @@ export default function UserList({userDTOs, setUserDTOs}: UserListProps) {
     if (error) return <div className="text-center py-4 text-error">{error}</div>
 
     return (
-        <div className="space-y-4">
-            <ul className="list bg-base-100 rounded-box shadow-md">
+        <div className="space-y-4 mt-4">
+            <ul className="list bg-base-100 rounded-box shadow">
                 {userDTOs?.map(renderFolloweeItem)}
             </ul>
         </div>

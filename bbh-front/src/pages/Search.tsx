@@ -1,17 +1,65 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import BookFilterPage from "../components/BookFilterPage"
 import { httpService, ResponseData } from "../api/client"
 import UserList from "../components/UserList"
+import ParaSearchResult from "../components/ParaSearchResult"
 
 export default function Search() {
-    const [query, setQuery] = useState<string|null>("")
+    const [query, setQuery] = useState<string>("")
     const [type, setType]=useState<"book"|"user"|"paragraph">("book")
-    const [loading, setLoading]=useState<boolean>(false)
-    const [error, setError]=useState<string|null>(null)
+    
 
     const [books, setBooks]=useState<BookDTOWithRole[]>([])
+    const [paraSearchItems, setParaSearchItems]=useState<ParaSearchItem[]>([])
     const [users, setUsers]=useState<UserDTOWithFollow[]>([])
+
+    const [loading, setLoading]=useState<boolean>(false)
+    const [error, setError]=useState<string|null>(null)
     
+
+    const initLast = async () => {
+        setQuery(localStorage.getItem("searchQuery")||"")
+        setType((localStorage.getItem("searchType") as "book"|"user"|"paragraph")||"book")
+        setLoading(true)
+        const searchBooksString: string|null = localStorage.getItem("searchBooksResult")
+        const searchParagraphsString: string|null = localStorage.getItem("searchParagraphsResult")
+        const searchUsersString: string|null = localStorage.getItem("searchUsersResult")
+        if (searchBooksString) {
+            try {
+                const searchBooks: BookDTOWithRole[] = JSON.parse(searchBooksString)
+                setBooks(searchBooks)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        if (searchParagraphsString) {
+            try {
+                const searchParagraphs: ParaSearchDTO = JSON.parse(searchParagraphsString)
+                setParaSearchItems(searchParagraphs.paraSearchItems)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        if (searchUsersString) {
+            try {
+                const searchUsers: UserDTOWithFollow[] = JSON.parse(searchUsersString)
+                setUsers(searchUsers)
+            } catch (error) {
+                console.log(error)
+            }
+        }     
+        setLoading(false)
+
+    }
+
+    useEffect(() => {
+        initLast()
+    }, [])
+
+    const setTypeAndSave = (type: "book"|"user"|"paragraph") => {
+        setType(type)
+        localStorage.setItem("searchType", type);
+    }
 
     const fetchBooks = async () => {
         setLoading(true)
@@ -23,6 +71,7 @@ export default function Search() {
                 return
             }
             setBooks(response.data)
+            localStorage.setItem("searchBooksResult", JSON.stringify(response.data))
         } catch (error) {
             if (error instanceof Error)
                 setError(error.message)
@@ -41,6 +90,26 @@ export default function Search() {
                 return
             }
             setUsers(response.data)
+            localStorage.setItem("searchUsersResult", JSON.stringify(response.data))
+        } catch (error) {
+            if (error instanceof Error)
+                setError(error.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const fetchParagraphs = async () => {
+        setLoading(true)
+        try {
+            const response: ResponseData<ParaSearchDTO> = await httpService.form<ParaSearchDTO>(`/paragraphs/search?query=${query}`, "GET")
+            if (response.success===false) {
+                setError(response.errorMsg)
+                setLoading(false)
+                return
+            }
+            setParaSearchItems(response.data.paraSearchItems);
+            localStorage.setItem("searchParagraphsResult", JSON.stringify(response.data.paraSearchItems))
         } catch (error) {
             if (error instanceof Error)
                 setError(error.message)
@@ -52,6 +121,7 @@ export default function Search() {
     const searchData = async () => {
         fetchBooks();
         fetchUsers();
+        fetchParagraphs();
     }
 
 
@@ -59,8 +129,8 @@ export default function Search() {
     if (loading) return <div className="fixed inset-0 flex"><span className="loading loading-spinner loading-xl m-auto"></span></div>
     if (error) {return <div className="text-center py-4 text-error">{error}</div>}
     return (<>
-        <h1 className="text-xl mt-5 flex justify-center">这里能搜索全站所有公开搜索的内容，以及您可访问的内容。</h1>
-        <form onSubmit={() => searchData()} className="flex mt-7 justify-center">
+        <h1 className="text-xl mt-5 ml-4 mr-4 flex justify-center">这里能搜索全站所有公开搜索的内容，以及您可访问的内容。</h1>
+        <form onSubmit={() => searchData()} className="flex mt-7 justify-center ml-4 mr-4">
             <label className="input flex items-center gap-4 w-full rounded-r-none">
                 <svg className="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <g
@@ -74,7 +144,10 @@ export default function Search() {
                     <path d="m21 21-4.3-4.3"></path>
                     </g>
                 </svg>
-                <input onChange={(e) => setQuery(e.target.value)} type="search" className="grow" placeholder="搜索" value={query?query:""} />
+                <input onChange={(e) => {
+                    setQuery(e.target.value);
+                    localStorage.setItem("searchQuery", e.target.value);
+                    }} type="search" className="grow" placeholder="搜索" value={query?query:""} />
                 {query && (
                 <button
                     type="button"
@@ -100,27 +173,27 @@ export default function Search() {
             </button>
         </form>
         <div className="flex flex-row justify-between items-center gap-6 mt-7"> 
-            <div className="flex items-center gap-2">
-                <span className="font-semibold">搜索类型：</span>
-                <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto md:w-auto">
+            <div>
+                <span className="font-semibold ml-4 mr-4">搜索类型：</span>
+                <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto md:w-auto shadow ml-4 mr-4 mt-2">
                     <li className="w-auto m-1 md:w-auto" key="book">
                         <a
                             className={type === "book" ? "menu-active" : ""}
-                            onClick={() => { setType("book") }}>
+                            onClick={() => { setTypeAndSave("book") }}>
                             书名
                         </a>
                     </li>
                     <li className="w-auto m-1 md:w-auto" key="paragraph">
                         <a 
                             className={type === "paragraph" ? "menu-active" : ""} 
-                            onClick={() => { setType("paragraph") }}>
+                            onClick={() => { setTypeAndSave("paragraph") }}>
                             段落
                         </a>
                     </li>
                     <li className="w-auto m-1 md:w-auto" key="user">
                         <a
                             className={type === "user" ? "menu-active" : ""} 
-                            onClick={() => { setType("user") }}>
+                            onClick={() => { setTypeAndSave("user") }}>
                             用户
                         </a>
                     </li>
@@ -128,8 +201,9 @@ export default function Search() {
             </div>
         </div>
         <div className="mt-10 mb-15">
-            <span className="font-semibold">搜索结果：</span>
+            <span className="font-semibold ml-4 mr-4 mb-4">搜索结果：</span>
             {type==="book" && books && books.length>0 && <BookFilterPage books={books} defaultClassifiedBy="null" defaultSortedBy="title" showSearchBox={false} />}
+            {type==="paragraph" && paraSearchItems && paraSearchItems.length>0 && <ParaSearchResult paraSearchItems={paraSearchItems} searchQuery={query} />}
             {type==="user" && users && users.length>0 && <UserList userDTOs={users} setUserDTOs={setUsers} />}
         </div>
         

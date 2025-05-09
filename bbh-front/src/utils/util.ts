@@ -1,6 +1,8 @@
 export function utc2current(utc: Date): string {
     const cur: Date=new Date(utc);
-    return cur.toLocaleDateString("zh-CN");
+    // return cur.toLocaleDateString("zh-CN");
+    console.log(utc)
+    return cur.toLocaleString("zh-CN");
 }
 
 export function toChinese(scope: string|null) {
@@ -33,6 +35,11 @@ export function toChinese(scope: string|null) {
         
         case "role":
             return "我的角色";
+        
+        case "creator":
+            return "一作";
+        case "contributor":
+            return "贡献者";
 
         case null:
             return "无";
@@ -41,3 +48,16 @@ export function toChinese(scope: string|null) {
             return scope;
     }
 }
+
+
+export function uniqueBy<T>(arr: T[], key: string): T[] {
+    return Array.from(
+        new Map(
+            arr.map(item => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const value = key.split('.').reduce((obj: any, key) => obj?.[key], item);
+                return [value, item];
+            })
+        ).values()
+    );
+  }

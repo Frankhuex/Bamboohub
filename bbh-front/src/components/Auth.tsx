@@ -84,15 +84,15 @@ export default function Auth({setLoggedIn}:AuthProps) {
 
     const loginCard=(
         <div className="flex justify-center w-full">
-            <form className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4"
+            <form className="fieldset bg-base-200 border-base-300 rounded-box w-full md:w-xs border p-4"
                 onSubmit={(e)=>{e.preventDefault();login()}} >
                 <legend className="fieldset-legend">登录</legend>
 
                 <label className="label">用户名</label>
-                <input onChange={(e)=>setUsername(e.target.value)} type="text" className="input" placeholder="用户名" />
+                <input onChange={(e)=>setUsername(e.target.value)} type="text" className="input w-full" placeholder="用户名" />
 
                 <label className="label">密码</label>
-                <input onChange={(e)=>setPassword(e.target.value)} type="password" className="input" placeholder="密码" />
+                <input onChange={(e)=>setPassword(e.target.value)} type="password" className="input w-full" placeholder="密码" />
 
                 <button className="btn btn-neutral mt-4" type="submit">登录</button>
                 <p className="text-red-500">{error}</p>
@@ -102,25 +102,25 @@ export default function Auth({setLoggedIn}:AuthProps) {
 
     const registerCard=(
         <div className="flex justify-center w-full">
-            <form className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4"
+            <form className="fieldset bg-base-200 border-base-300 rounded-box w-full md:w-xs border p-4"
                 onSubmit={(e)=>{e.preventDefault();register()}}>
                 <legend className="fieldset-legend">注册</legend>
 
                 <label className="label"><strong>用户名</strong><br /></label>
                 <p className="text-xs text-gray-500">· 用于登录，不可与他人重名</p>
-                <input onChange={(e)=>setUsername(e.target.value)} type="text" className="input" placeholder="用户名" />
+                <input onChange={(e)=>setUsername(e.target.value)} type="text" className="input w-full" placeholder="用户名" />
 
                 <label className="label"><strong>昵称</strong><br /></label>
                 <p className="text-xs text-gray-500">· 用于展示，可为任何名称</p>
-                <input onChange={(e)=>setNickname(e.target.value)} type="text" className="input" placeholder="昵称" />
+                <input onChange={(e)=>setNickname(e.target.value)} type="text" className="input w-full" placeholder="昵称" />
 
                 <label className="label"><strong>密码</strong><br /></label>
                 <p className="text-xs text-gray-500"></p>
-                <input onChange={(e)=>setPassword(e.target.value)} type="password" className="input" placeholder="密码" />
+                <input onChange={(e)=>setPassword(e.target.value)} type="password" className="input w-full" placeholder="密码" />
 
                 <label className="label"><strong>确认密码</strong><br /></label>
                 <p className="text-xs text-gray-500">· 请再次输入密码</p>
-                <input onChange={(e)=>setConfirmPassword(e.target.value)} type="password" className="input" placeholder="确认密码" />
+                <input onChange={(e)=>setConfirmPassword(e.target.value)} type="password" className="input w-full" placeholder="确认密码" />
 
                 <button className="btn btn-neutral mt-4" type="submit" >注册</button>
                 <p className="text-red-500">{error}</p>
