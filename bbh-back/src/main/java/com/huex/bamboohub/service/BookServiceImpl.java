@@ -25,7 +25,7 @@ public class BookServiceImpl implements BookService {
     @Autowired private JwtUtil jwtUtil;
     @Autowired private RoleUtil roleUtil;
     @Autowired private RoleService roleService;
-    @Autowired private CacheManager cacheManager;
+    @Autowired private CacheUtil cacheUtil;
 
     @Override
     @CacheEvict(value = "books", allEntries = true)
@@ -46,6 +46,9 @@ public class BookServiceImpl implements BookService {
         endPara.setBook(savedBook);
         Paragraph savedEndPara=paraRepo.save(endPara);
         savedBook.setEndPara(savedEndPara);
+
+        savedStartPara.setNextParaId(savedEndPara.getId());
+        savedEndPara.setPrevParaId(savedStartPara.getId());
 
         paraRepo.save(savedStartPara);
         paraRepo.save(savedEndPara);
@@ -143,6 +146,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public List<BookDTOWithRole> searchBooksByTitleWithRole(String token, String title) {
+        if (!StringUtils.hasText(title)) return new ArrayList<>();
         List<Book> books=bookRepo.findByTitleContaining(title);
         List<BookDTOWithRole> filteredBooks=new ArrayList<>();
         User user=jwtUtil.parseUser(token).orElse(null);
@@ -173,18 +177,9 @@ public class BookServiceImpl implements BookService {
         }
         bookRepo.deleteById(id);
 
-        Cache cache=cacheManager.getCache("rolesOfBook");
-        if (cache != null) {
-            cache.evict("bookId:"+book.getId());
-        }
-        cache=cacheManager.getCache("paraIdsOfBook");
-        if (cache != null) {
-            cache.evict("bookId:"+book.getId());
-        }
-        cache=cacheManager.getCache("parasOfBook");
-        if (cache != null) {
-            cache.evict("bookId:"+book.getId());
-        }
+
+        cacheUtil.clearCache(List.of("books","rolesOfBook","paraIdsOfBook","parasOfBook"),"bookId:"+book.getId());
+
         return true;
     }
 

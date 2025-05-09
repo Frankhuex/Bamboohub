@@ -97,8 +97,8 @@ export default function MyFollowing() {
     return (
         <div className="space-y-4">
 
-            <h2 className="text-xl font-bold">我的关注</h2>
-            <div className="flex flex-col justify-between mb-3">
+            <h2 className="text-xl font-bold ml-4">我的关注</h2>
+            <div className="flex flex-col justify-between mb-3 ml-4 mr-4">
                 <div className="flex justify-center flex-1 mr-3 mb-3">
                     <label className="input flex items-center gap-4 w-full">
                         <svg className="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@ export default function MyFollowing() {
                 </div>
                 <div>
                     <span className="font-semibold">排序：</span>
-                    <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto">
+                    <ul className="menu menu-horizontal bg-base-200 rounded-box w-auto shadow mt-2">
                         <li className="m-1 w-auto" key="nickname">
                             <a
                                 className={sortedBy === "nickname" ? "menu-active" : ""}

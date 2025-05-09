@@ -15,7 +15,7 @@ public class ParagraphController {
     private ParagraphService paragraphService;
 
     @GetMapping("/book/{bookId}/paragraphs")
-    public Response<List<ParagraphDTO>> getParagraphsByBookId(@RequestHeader("Authorization") String token, @PathVariable("bookId") Long bookId) {
+    public Response<List<ParagraphDTO>> getParagraphsByBookId(@RequestHeader(value="Authorization",required=false) String token, @PathVariable("bookId") Long bookId) {
         try {
             return Response.newSuccess(paragraphService.getParagraphsByBookId(token,bookId));
         } catch (Exception e) { 
@@ -42,7 +42,7 @@ public class ParagraphController {
     }
 
     @PostMapping("/paragraph")
-    public Response<ParagraphDTO> addNewParagraph(@RequestHeader("Authorization") String token, @RequestBody ParagraphReq paraReq) {
+    public Response<ParagraphDTO> addNewParagraph(@RequestHeader(value="Authorization", required=false) String token, @RequestBody ParagraphReq paraReq) {
         try { 
             return Response.newSuccess(paragraphService.addNewParagraph(token, paraReq));
         } catch (Exception e) { 
@@ -51,7 +51,7 @@ public class ParagraphController {
     }
 
     @DeleteMapping("/paragraph/{id}")
-    public Response<Boolean> deleteParagraph(@RequestHeader("Authorization") String token, @PathVariable("id") Long id) {
+    public Response<Boolean> deleteParagraph(@RequestHeader(value="Authorization",required=false) String token, @PathVariable("id") Long id) {
         try {
             paragraphService.deleteParagraphById(token,id);
             return Response.newSuccess(true);
@@ -61,7 +61,7 @@ public class ParagraphController {
     }
 
     @GetMapping("/paragraph/{id}")
-    public Response<ParagraphDTO> getParagraphById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id) {
+    public Response<ParagraphDTO> getParagraphById(@RequestHeader(value="Authorization",required=false) String token, @PathVariable("id") Long id) {
         try {
             return Response.newSuccess(paragraphService.getParagraphById(token,id));
         } catch (Exception e) {
@@ -70,7 +70,7 @@ public class ParagraphController {
     }
 
     @PutMapping("/paragraph/{id}")
-    public Response<ParagraphDTO> updateParagraphById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id, @RequestBody ParagraphUpdateReq paraUpdReq)
+    public Response<ParagraphDTO> updateParagraphById(@RequestHeader(value="Authorization",required=false) String token, @PathVariable("id") Long id, @RequestBody ParagraphUpdateReq paraUpdReq)
     {
         try {
             return Response.newSuccess(paragraphService.updateParagraphById(token,id,paraUpdReq));
@@ -79,8 +79,8 @@ public class ParagraphController {
         }
     }
 
-    @PostMapping("/paragraph/{id}/move-up")
-    public Response<ParagraphDTO> moveUpParagraphById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id) {
+    @PostMapping("/paragraph/{id}/moveUp")
+    public Response<ParagraphDTO> moveUpParagraphById(@RequestHeader(value="Authorization",required=false) String token, @PathVariable("id") Long id) {
         try {
             return Response.newSuccess(paragraphService.moveUpParagraphById(token,id));
         } catch (Exception e) {
@@ -88,8 +88,8 @@ public class ParagraphController {
         }
     }
 
-    @PostMapping("/paragraph/{id}/move-down")
-    public Response<ParagraphDTO> moveDownParagraphById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id) {
+    @PostMapping("/paragraph/{id}/moveDown")
+    public Response<ParagraphDTO> moveDownParagraphById(@RequestHeader(value="Authorization",required=false) String token, @PathVariable("id") Long id) {
         try {
             return Response.newSuccess(paragraphService.moveDownParagraphById(token,id));
         } catch (Exception e) {
@@ -97,8 +97,8 @@ public class ParagraphController {
         }
     }
 
-    @GetMapping("/paragraph/{id}/get-book")
-    public Response<BookDTO> getBookByParagraphId(@RequestHeader("Authorization") String token, @PathVariable("id") Long id) {
+    @GetMapping("/paragraph/{id}/getBook")
+    public Response<BookDTO> getBookByParagraphId(@RequestHeader(value="Authorization",required=false) String token, @PathVariable("id") Long id) {
         try {
             return Response.newSuccess(paragraphService.getBookByParaId(token,id));
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class ParagraphController {
     }
 
     @GetMapping("/paragraphs/search")
-    public Response<List<ParagraphDTO>> searchParagraphs(@RequestHeader(value="Authorization",required = false) String token, @RequestParam("query") String query) {
+    public Response<ParaSearchDTO> searchParagraphs(@RequestHeader(value="Authorization",required = false) String token, @RequestParam("query") String query) {
         try {
             return Response.newSuccess(paragraphService.searchParagraphsByAny(token,query));
         } catch (Exception e) {

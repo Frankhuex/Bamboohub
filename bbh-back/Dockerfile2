@@ -1,0 +1,22 @@
+# 第一阶段：构建阶段（兼容多平台）
+FROM --platform=${BUILDPLATFORM:-linux/amd64} maven:3.8.6-eclipse-temurin-17 AS builder
+WORKDIR /app
+
+# 使用阿里云镜像加速（国内用户建议添加）
+COPY settings.xml /root/.m2/settings.xml
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+COPY src ./src
+RUN mvn package -DskipTests
+
+# 第二阶段：运行阶段（多平台支持）
+# 改用 Ubuntu 基础镜像
+FROM eclipse-temurin:17-jre-jammy
+
+WORKDIR /app
+RUN groupadd -r spring && useradd -r -g spring spring
+USER spring
+COPY --from=builder --chown=spring:spring /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-jar", "/app/app.jar"]

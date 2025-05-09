@@ -38,6 +38,9 @@ public class User {
     @OneToMany(mappedBy="user",cascade=CascadeType.ALL,orphanRemoval=true)
     private List<Role> roles=new ArrayList<>();
 
+    @OneToMany(mappedBy="user",cascade=CascadeType.ALL,orphanRemoval=true)
+    private List<ParaRole> paraRoles=new ArrayList<>();
+
     @OneToMany(mappedBy="target",cascade=CascadeType.ALL,orphanRemoval=true)
     private List<Follow> follows=new ArrayList<>();
 

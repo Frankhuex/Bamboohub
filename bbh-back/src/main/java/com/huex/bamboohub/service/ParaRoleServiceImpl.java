@@ -4,6 +4,7 @@ import com.huex.bamboohub.dao.*;
 import com.huex.bamboohub.dto.ParaRoleDTO;
 import com.huex.bamboohub.dto.ParaRolesDTO;
 import com.huex.bamboohub.request.ParaRoleReq;
+import com.huex.bamboohub.util.CacheUtil;
 import com.huex.bamboohub.util.JwtUtil;
 import com.huex.bamboohub.util.RoleUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +23,12 @@ public class ParaRoleServiceImpl implements ParaRoleService {
     @Autowired private ParaRoleRepo paraRoleRepo;
     @Autowired private RoleUtil roleUtil;
     @Autowired private ParaRoleConverter paraRoleConverter;
-    @Autowired private CacheManager cacheManager;
     @Autowired private JwtUtil jwtUtil;
+    @Autowired private CacheUtil cacheUtil;
 
 
     @Override
-    @CacheEvict(value="rolesOfParagraph", key="'paraId:'+#paraRoleReq.getParaId()")
+    @CacheEvict(value="rolesOfPara", key="'paraId:'+#paraRoleReq.getParaId()")
     public ParaRoleDTO putParaRole(String token, ParaRoleReq paraRoleReq) {
         Paragraph paragraph=paragraphRepo.findById(paraRoleReq.getParaId())
                 .orElseThrow(() -> new IllegalArgumentException("Paragraph not found"));
@@ -37,6 +38,13 @@ public class ParaRoleServiceImpl implements ParaRoleService {
         if (!roleUtil.hasRoleCanAdmin(token, book)) {
             throw new IllegalArgumentException("User not authorized to put paragraph role");
         }
+
+        User user=jwtUtil.parseUser(token).orElseThrow(() -> new IllegalArgumentException("Invalid token"));
+
+        if (paraRoleRepo.existsByUserAndParagraphAndRoleType(user,paragraph,paraRoleReq.getRoleType())) {
+            throw new IllegalArgumentException("User already has this role for this paragraph");
+        }
+
         ParaRole paraRole=paraRoleConverter.toDAO(paraRoleReq);
         ParaRole savedParaRole=paraRoleRepo.save(paraRole);
         return paraRoleConverter.toDTO(savedParaRole);
@@ -54,8 +62,7 @@ public class ParaRoleServiceImpl implements ParaRoleService {
             throw new IllegalArgumentException("User not authorized to put paragraph role");
         }
         paraRoleRepo.deleteById(roleId);
-        Cache cache=cacheManager.getCache("rolesOfParagraph");
-        if (cache!=null) cache.evict("paraId:"+role.getParagraph().getId());
+        cacheUtil.clearCache("rolesOfPara","paraId:"+role.getParagraph().getId());
         return true;
     }
 
@@ -70,13 +77,13 @@ public class ParaRoleServiceImpl implements ParaRoleService {
         }
         role.setRoleType(newType);
         ParaRole savedRole=paraRoleRepo.save(role);
-        Cache cache=cacheManager.getCache("rolesOfParagraph");
-        if (cache!=null) cache.evict("paraId:"+role.getParagraph().getId());
+
+        cacheUtil.clearCache("rolesOfPara","paraId:"+role.getParagraph().getId());
         return paraRoleConverter.toDTO(savedRole);
     }
 
     @Override
-    @Cacheable(value="rolesOfParagraph", key="'paraId:'+#paraId")
+    @Cacheable(value="rolesOfPara", key="'paraId:'+#paraId")
     public ParaRolesDTO getParaRolesByParaId(String token, Long paraId) {
         Paragraph paragraph=paragraphRepo.findById(paraId)
                 .orElseThrow(() -> new IllegalArgumentException("Paragraph not found"));
@@ -86,5 +93,7 @@ public class ParaRoleServiceImpl implements ParaRoleService {
         List<ParaRole> paraRoles=paraRoleRepo.findByParagraph(paragraph);
         return paraRoleConverter.toParaRolesDTO(paraRoles);
     }
+
+
 
 }

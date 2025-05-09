@@ -18,7 +18,7 @@ public class ParaRoleDTO {
     private Long id;
     private Date createTime;
     private Long paraId;
-    private Long userId;
+    private UserDTO userDTO;
     private ParaRole.RoleType roleType;
 
 

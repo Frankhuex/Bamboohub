@@ -11,13 +11,15 @@ import com.huex.bamboohub.request.*;
 public class ParaRoleConverter {
     @Autowired private UserRepo userRepo;
     @Autowired private ParagraphRepo paraRepo;
+    @Autowired private UserConverter userConverter;
+    @Autowired private ParagraphConverter paraConverter;
 
     public ParaRoleDTO toDTO(ParaRole paraRole) {
         return new ParaRoleDTO(
                 paraRole.getId(),
                 paraRole.getCreateTime(),
                 paraRole.getParagraph().getId(),
-                paraRole.getUser().getId(),
+                userConverter.toDTO(paraRole.getUser()),
                 paraRole.getRoleType()
         );
     }

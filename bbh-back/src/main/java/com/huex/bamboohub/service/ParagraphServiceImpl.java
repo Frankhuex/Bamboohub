@@ -1,8 +1,6 @@
 package com.huex.bamboohub.service;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
@@ -28,9 +26,11 @@ public class ParagraphServiceImpl implements ParagraphService {
     @Autowired private BookRepo bookRepo;
     @Autowired private ParagraphConverter paraConverter;
     @Autowired private BookConverter bookConverter;
-    @Autowired private CacheManager cacheManager;
+    @Autowired private CacheUtil cacheUtil;
     @Autowired private JwtUtil jwtUtil;
     @Autowired private ParaRoleRepo paraRoleRepo;
+    @Autowired private RoleRepo roleRepo;
+    @Autowired private UserRepo userRepo;
 
     @Override
     @Cacheable(value="parasOfBook",key="'bookId:'+#bookId")
@@ -58,7 +58,7 @@ public class ParagraphServiceImpl implements ParagraphService {
 
     @Override
     public ParagraphDTO addNewParagraph(String token, ParagraphReq paraReq) throws IllegalArgumentException {
-        User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
+        User user=jwtUtil.parseUser(token).orElse(null);
 
         // Check if previous paragraph exists
         Long prevParaId=paraReq.getPrevParaId();
@@ -87,13 +87,14 @@ public class ParagraphServiceImpl implements ParagraphService {
 
         List<ParagraphDTO> savedParas=connectParas(new Paragraph[]{prevPara,para,nextPara});
         
-
-        ParaRole paraRole=new ParaRole(
-                user,
-                para,
-                ParaRole.RoleType.CREATOR
-        );
-        paraRoleRepo.save(paraRole);
+        if (user!=null) {
+            ParaRole paraRole = new ParaRole(
+                    user,
+                    para,
+                    ParaRole.RoleType.CREATOR
+            );
+            paraRoleRepo.save(paraRole);
+        }
 
         evictCacheParas(new Long[]{prevParaId,thisId,nextParaId});
         evictCacheParasOfBook(bookId);
@@ -135,12 +136,14 @@ public class ParagraphServiceImpl implements ParagraphService {
 
         evictCacheParas(new Long[]{id,prevParaId,nextParaId});
         evictCacheParasOfBook(bookId);
+        cacheUtil.clearCache("rolesOfPara","paraId:"+id);
+
         paraRepo.delete(paragraph);
         return true;
     }
 
     @Override
-    @Cacheable(value = "paragraphs", key = "'para:' + #id", unless = "#result == null")
+    @Cacheable(value = "paragraphs", key = "'paraId:' + #id", unless = "#result == null")
     public ParagraphDTO getParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
@@ -152,28 +155,30 @@ public class ParagraphServiceImpl implements ParagraphService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "paragraphs", key = "'para:' + #id")
+    @CacheEvict(value = "paragraphs", key = "'paraId:' + #id")
     public ParagraphDTO updateParagraphById(String token, Long id, ParagraphUpdateReq paraUpdReq) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
         Book book=paragraph.getBook();
-        if (!roleUtil.generalCanEditParagraph(token,book)) {
+
+        User user=jwtUtil.parseUser(token).orElse(null);
+        if (!roleUtil.generalCanEditParagraph(user,book)) {
             throw new IllegalArgumentException("No permission to update paragraph.");
         }
         String author=paraUpdReq.getAuthor();
         String content=paraUpdReq.getContent();
-        if (StringUtils.hasText(author) && !author.equals(paragraph.getAuthor())) {
+        if (!author.equals(paragraph.getAuthor())) {
             paragraph.setAuthor(author);
         }
-        if (StringUtils.hasText(content) && !content.equals(paragraph.getContent())) {
+        if (!content.equals(paragraph.getContent())) {
             paragraph.setContent(content);
         }
         Paragraph updatedParagraph = paraRepo.save(paragraph);
         
-        User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
 
 
-        if (!paraRoleRepo.existsByUserAndParagraph(user,updatedParagraph)) {
+
+        if (user!=null && !paraRoleRepo.existsByUserAndParagraphAndRoleType(user,updatedParagraph,ParaRole.RoleType.CONTRIBUTOR)) {
             ParaRole paraRole = new ParaRole(
                     user,
                     updatedParagraph,
@@ -181,7 +186,11 @@ public class ParagraphServiceImpl implements ParagraphService {
             );
 
             paraRoleRepo.save(paraRole);
+            cacheUtil.clearCache("rolesOfPara","paraId:"+id);
         }
+
+        evictCacheParasOfBook(book.getId());
+
         return paraConverter.toDTO(updatedParagraph);
     }
 
@@ -291,16 +300,45 @@ public class ParagraphServiceImpl implements ParagraphService {
 
 
     @Override
-    public List<ParagraphDTO> searchParagraphsByAny(String token, String query) {
+    public ParaSearchDTO searchParagraphsByAny(String token, String query) {
+        if (StringUtils.isEmpty(query)) {
+            return new ParaSearchDTO(new ArrayList<>());
+        }
+        User user=jwtUtil.parseUser(token).orElse(null);
+//        List<Paragraph> paras=paraRepo.findComplexParagraphs(query,query,null,null);
         List<Paragraph> paras=paraRepo.findByAuthorContainingOrContentContaining(query,query);
-        List<Paragraph> filteredParas=new ArrayList<>();
+        paras=paras.stream().filter(p->p.getPrevParaId()!=null && p.getNextParaId()!=null).toList();
+        Map<Long,List<Paragraph>> bookParaMap=new HashMap<>();
         for (Paragraph para : paras) {
-            if (roleUtil.generalCanSearchParagraph(token,para))
-            {
-                filteredParas.add(para);
+//            bookParaMap.getOrDefault(para.getBook().getId(),new ArrayList<>()).add(para);
+            if (!bookParaMap.containsKey(para.getBook().getId())) {
+                bookParaMap.put(para.getBook().getId(),new ArrayList<>());
+            }
+            bookParaMap.get(para.getBook().getId()).add(para);
+        }
+        List<ParaSearchItem> items=new ArrayList<>();
+        for (List<Paragraph> paraList : bookParaMap.values()) {
+            Book book=paraList.get(0).getBook();
+            BookDTOWithRole bookDTOWithRole;
+            if (user==null) {
+                bookDTOWithRole=bookConverter.toDTOWithRole(book, null);
+            }
+            else {
+                Role role=roleRepo.findByUserAndBook(user, book).orElse(null);
+                bookDTOWithRole=bookConverter.toDTOWithRole(book,role);
+            }
+
+            if (roleUtil.generalCanSearchParagraph(user,book)) {
+                paraList.sort(Comparator.comparing(Paragraph::getCreateTime).reversed());
+                ParaSearchItem item = new ParaSearchItem(
+                        bookDTOWithRole,
+                        paraConverter.toDTOs(paraList)
+                );
+                items.add(item);
             }
         }
-        return paraConverter.toDTOs(filteredParas);
+        items.sort((a,b)->b.getParagraphDTOs().size()-a.getParagraphDTOs().size());
+        return new ParaSearchDTO(items);
     }
 
 
@@ -359,24 +397,17 @@ public class ParagraphServiceImpl implements ParagraphService {
     }
 
     private void evictCacheParas(Long[] paraIds) {
-        Cache cacheParas = cacheManager.getCache("paragraphs");
-        if (cacheParas != null){
-            for (Long id : paraIds) {
-                if (id!=null) {
-                    cacheParas.evict("para:"+id);
-                }
+        List<String> keys=new ArrayList<>();
+        for (Long id : paraIds) {
+            if (id!=null) {
+                keys.add("paraId:"+id);
             }
         }
+        cacheUtil.clearCache("paragraphs",keys);
+        cacheUtil.clearCache("rolesOfPara",keys);
     }
 
     private void evictCacheParasOfBook(Long bookId) {
-        Cache cacheParaIds = cacheManager.getCache("paraIdsOfBook");
-        if (cacheParaIds != null) {
-            cacheParaIds.evict("bookId:"+bookId);
-        }
-        Cache parasOfBook = cacheManager.getCache("parasOfBook");
-        if (parasOfBook != null) {
-            parasOfBook.evict("bookId:"+bookId);
-        }
+        cacheUtil.clearCache(List.of("paraIdsOfBook","parasOfBook"),"bookId:"+bookId);
     }
 }
