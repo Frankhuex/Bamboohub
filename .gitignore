@@ -17,11 +17,3 @@
 .vscode/
 
 .DS_Store
-history/
-releases/
-Bamboohub-database/
-Bamboohub-frontend-old/
-Bamboohub-frontend/
-Bamboohub-backend/
-nginx-config/
-upload.sh
