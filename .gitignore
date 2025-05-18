@@ -17,5 +17,3 @@
 .vscode/
 
 .DS_Store
-nginx-config/
-upload.sh
