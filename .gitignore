@@ -20,6 +20,8 @@
 history/
 releases/
 Bamboohub-database/
-Bamboohub-frontend-old
+Bamboohub-frontend-old/
+Bamboohub-frontend/
+Bamboohub-backend/
 nginx-config/
 upload.sh
