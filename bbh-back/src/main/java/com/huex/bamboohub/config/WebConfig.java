@@ -19,6 +19,7 @@ public class WebConfig implements WebMvcConfigurer {
                     "http://bbh.beforce.site:5173",
                     "http://bbh.beforce.site",
                     "https://bbh.beforce.site",
+                    "https://115.159.31.68",
                     System.getenv("FRONTEND_URL")
             )  // 允许来自前端的请求源（根据你的前端地址修改）
             .allowedMethods("*")  // 允许的HTTP请求方法
