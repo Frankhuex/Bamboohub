@@ -1,11 +1,7 @@
-FROM eclipse-temurin:17-jre-jammy
-WORKDIR /app
-
-# 直接复制（默认使用 root 用户）
-COPY target/*.jar app.jar
-
-# 暴露端口
-EXPOSE 8080
-
-# 直接运行（无安全隔离）
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# bbh-back/Dockerfile
+FROM openjdk:17-jdk
+COPY target/bbh-back-0.2.jar app.jar
+# 在 Dockerfile 中确保有权限
+RUN mkdir -p /sys/fs/cgroup/
+VOLUME /sys/fs/cgroup
+ENTRYPOINT ["java", "-jar", "app.jar"]

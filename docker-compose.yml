@@ -1,0 +1,70 @@
+services:
+
+  # 前端服务
+  frontend:
+    image: bbh-frontend
+    build:
+      context: ./bbh-front
+      dockerfile: Dockerfile
+    ports:
+      - "443:443"
+      - "80:80"
+    restart: always
+    depends_on:
+      - backend
+
+  # 后端服务
+  backend:
+    image: bbh-backend
+    build:
+      context: ./bbh-back
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bamboohub?characterEncoding=utf-8&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: bamboohub
+      SPRING_DATASOURCE_PASSWORD: 7777
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migration
+      SPRING_DATA_REDIS_HOST: redis
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+
+  # MySQL 数据库
+  mysql:
+    image: container-registry.oracle.com/mysql/community-server:8.0.41
+    container_name: bbh-mysql
+    environment:
+      MYSQL_PASSWORD: 7777
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # - ./bbh-back/src/main/resources/db/migration:/flyway/sql
+      - ./bbh-back/src/main/resources/db/migration/init:/docker-entrypoint-initdb.d
+    user: "999"
+    # command:
+    #   [
+    #     "--default-authentication-plugin=mysql_native_password",
+    #     "--init-file=/flyway/init.sql"
+    #   ]
+    restart: always
+
+  # Redis 缓存
+  redis:
+    image: redis:latest
+    container_name: bbh-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  mysql_data:
+  redis_data:

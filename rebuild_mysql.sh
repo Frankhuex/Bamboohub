@@ -1,0 +1,1 @@
+docker-compose -p bbh-test up -d --no-deps --build mysql
