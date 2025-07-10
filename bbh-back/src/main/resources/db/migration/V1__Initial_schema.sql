@@ -1,7 +1,4 @@
-CREATE DATABASE IF NOT EXISTS bamboohub;
-USE bamboohub;
 
-SET FOREIGN_KEY_CHECKS=0;
 
 CREATE TABLE `book` (
                         `id` int NOT NULL AUTO_INCREMENT COMMENT 'Primary Key',

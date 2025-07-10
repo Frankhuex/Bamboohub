@@ -37,7 +37,6 @@ services:
   # MySQL 数据库
   mysql:
     image: container-registry.oracle.com/mysql/community-server:8.0.41
-    container_name: bbh-mysql
     environment:
       MYSQL_PASSWORD: 7777
       MYSQL_ROOT_HOST: "%"
@@ -46,7 +45,8 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       # - ./bbh-back/src/main/resources/db/migration:/flyway/sql
-      - ./bbh-back/src/main/resources/db/migration/init:/docker-entrypoint-initdb.d
+      # - ./bbh-back/src/main/resources/db/migration/init:/docker-entrypoint-initdb.d
+      - ./bbh-back/src/main/resources/db/migration/init.sql:/docker-entrypoint-initdb.d/init.sql
     user: "999"
     # command:
     #   [
@@ -58,7 +58,6 @@ services:
   # Redis 缓存
   redis:
     image: redis:latest
-    container_name: bbh-redis
     ports:
       - "6379:6379"
     volumes:

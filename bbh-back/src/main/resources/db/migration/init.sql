@@ -1,6 +1,10 @@
--- bbh-back/src/main/resources/db/migration/init.sql
+CREATE USER 'bamboohub'@'%' IDENTIFIED BY '7777';
+
+GRANT ALL PRIVILEGES ON *.* TO 'bamboohub'@'%' WITH GRANT OPTION;
+
+FLUSH PRIVILEGES;
 
 CREATE DATABASE IF NOT EXISTS bamboohub;
-CREATE USER IF NOT EXISTS 'bamboohub'@'%' IDENTIFIED BY '7777';
-GRANT ALL PRIVILEGES ON bamboohub.* TO 'bamboohub'@'%';
-FLUSH PRIVILEGES;
+USE bamboohub;
+
+SET FOREIGN_KEY_CHECKS=0;
