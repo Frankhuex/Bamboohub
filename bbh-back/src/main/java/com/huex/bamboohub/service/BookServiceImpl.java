@@ -2,6 +2,7 @@ package com.huex.bamboohub.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -86,6 +87,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    @Tool(name="getPlazaBooks",description="Get all books in the book plaza, which means all books accessible to public.")
     // Books where you have a role
     public List<BookDTOWithRole> getALLREADAndALLEDITBooksWithRole(String token) {
         List<Book> books=bookRepo.findByScopeIn(List.of(Book.Scope.ALLREAD, Book.Scope.ALLEDIT));

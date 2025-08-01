@@ -19,3 +19,22 @@ sh build.sh
 #### 3. 部分重新编译打包
 按需运行（可修改Docker服务名）:
 rebuild_back.sh, rebuild_front.sh, rebuild_mysql.sh
+
+#### 4. 用导出的镜像部署
+##### (1) 在本地导出镜像
+用正确的服务名、volume名以及TLS证书打包出镜像后，用export_images.sh导出镜像。
+```bash
+sh export_images.sh
+```
+
+##### (2) 上传镜像至服务器
+注意要把镜像文件、docker-compose-image.yml、以及数据库初始脚本init.sql都上传到服务器。
+
+##### (3) 在服务器上导入镜像
+将镜像上传至服务器后，用import_images.sh导入镜像。
+```bash
+sh import_images.sh
+```
+
+##### (4) 启动服务
+把init.sql放在docker-compose-image.yml相同目录下，然后启动服务。
