@@ -2,8 +2,10 @@
 FROM nginx:alpine
 COPY dist /usr/share/nginx/html
 COPY ./nginx/bbh-front.conf /etc/nginx/conf.d/default.conf
-COPY ./nginx/localhost/localhost.crt /etc/nginx/ssl/localhost.crt
-COPY ./nginx/localhost/localhost.key /etc/nginx/ssl/localhost.key
+# COPY ./nginx/localhost/localhost.crt /etc/nginx/ssl/localhost.crt
+# COPY ./nginx/localhost/localhost.key /etc/nginx/ssl/localhost.key
+COPY ./nginx/115.159.31.68/certificate.crt /etc/nginx/ssl/certificate.crt
+COPY ./nginx/115.159.31.68/private.key /etc/nginx/ssl/private.key
 
 EXPOSE 443
 EXPOSE 80

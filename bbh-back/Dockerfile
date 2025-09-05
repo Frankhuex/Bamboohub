@@ -1,5 +1,5 @@
 # bbh-back/Dockerfile
-FROM openjdk:17-jdk
+FROM openjdk:17-jdk-alpine
 COPY target/bbh-back-0.2.jar app.jar
 # 在 Dockerfile 中确保有权限
 RUN mkdir -p /sys/fs/cgroup/
