@@ -9,8 +9,8 @@ const createAxiosInstance = (): AxiosInstance => {
 
 const instance = axios.create({
     // baseURL: import.meta.env.VITE_API_BASE_URL||'https://bbh.beforce.site/api',
-    baseURL: '/api',
-    // baseURL: 'http://localhost:8080/api',
+    // baseURL: '/api',
+    baseURL: 'http://106.13.161.72:10000/api',
     timeout: 10000,
 });
 
