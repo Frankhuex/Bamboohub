@@ -7,10 +7,6 @@ import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.request.*;
 import com.huex.bamboohub.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,10 +22,8 @@ public class RoleServiceImpl implements RoleService {
     @Autowired private RoleUtil roleUtil;
     @Autowired private JwtUtil jwtUtil;
     @Autowired private RoleConverter roleConverter;
-    @Autowired private CacheUtil cacheUtil;
 
     @Override
-    @CacheEvict(value="rolesOfBook", key="'bookId:'+#roleReq.getBookId()")
     public RoleDTO putRole(String token, RoleReq roleReq) throws IllegalArgumentException {
         //不能给被操作者赋予owner权限
         if (roleReq.getRoleType()==RoleType.OWNER) {
@@ -57,7 +51,6 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    @CacheEvict(value="rolesOfBook", key="'bookId:'+#rolesReq.getBookId()")
     public List<RoleDTO> putRolesAsViewer(String token, RolesAsViewerReq rolesReq) {
         User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));
         Book book=bookRepo.findById(rolesReq.getBookId()).orElseThrow(() -> new IllegalArgumentException("Book not found"));
@@ -113,8 +106,6 @@ public class RoleServiceImpl implements RoleService {
         role.setRoleType(newRoleType);
         Role savedRole=roleRepo.save(role);
 
-        cacheUtil.clearCache("rolesOfBook", "bookId:"+book.getId());
-
         return roleConverter.toDTO(savedRole);
     }
 
@@ -123,14 +114,10 @@ public class RoleServiceImpl implements RoleService {
         Role role=roleRepo.findById(roleId)
             .orElseThrow(() -> new IllegalArgumentException("Role not found"));
         deleteRoleByBookIdAndEmployee(token, role.getBook().getId(), role.getUser());
-
-        // Clear cache of roles of book
-        cacheUtil.clearCache("rolesOfBook", "bookId:"+role.getBook().getId());
         return true;
     }
 
     @Override
-    @CacheEvict(value="rolesOfBook", key="'bookId:'+#bookId")
     public boolean deleteRoleByBookIdAndUsername(String token, Long bookId, String username) throws IllegalArgumentException {
         User employee=userRepo.findByUsername(username)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -146,7 +133,6 @@ public class RoleServiceImpl implements RoleService {
 
 
     @Override
-    @Cacheable(value="rolesOfBook", key="'bookId:'+#bookId")
     public RolesDTO getRolesByBookId(String token, Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(() -> new IllegalArgumentException("Book not found"));
@@ -169,7 +155,6 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    @CacheEvict(value="rolesOfBook", key="'bookId:'+#book.getId()")
     public Role putRoleWithoutToken(User user, Book book, RoleType roleType) {
         // 查找现有的角色并更新，找不到则创建新角色
         Role role = roleRepo.findByUserAndBook(user, book)
@@ -182,7 +167,6 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    @CacheEvict(value="rolesOfBook", key="'bookId:'+#bookId")
     public RolesDTO changeOwner(String token, Long bookId, Long targetId) {
         User user=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));
         Book book=bookRepo.findById(bookId).orElseThrow(() -> new IllegalArgumentException("Book not found"));

@@ -3,9 +3,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
 
 import com.huex.bamboohub.dto.*;
@@ -16,7 +13,6 @@ import com.huex.bamboohub.util.*;
 import org.springframework.util.StringUtils;
 
 @Service
-@CacheConfig(cacheNames = "books")
 public class BookServiceImpl implements BookService {
     @Autowired private BookRepo bookRepo;
     @Autowired private ParagraphRepo paraRepo;
@@ -25,10 +21,8 @@ public class BookServiceImpl implements BookService {
     @Autowired private JwtUtil jwtUtil;
     @Autowired private RoleUtil roleUtil;
     @Autowired private RoleService roleService;
-    @Autowired private CacheUtil cacheUtil;
 
     @Override
-    @CacheEvict(value = "books", allEntries = true)
     public BookDTO addNewBook(String token, BookReq bookReq) throws IllegalArgumentException {
         User owner=jwtUtil.parseUser(token).orElseThrow(()->new IllegalArgumentException("Invalid token"));;;
         if (owner==null) throw new IllegalArgumentException("Invalid token.");
@@ -60,7 +54,6 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    @Cacheable(value="books", key="'book:'+#id")
     public BookDTO getBookById(String token, Long id) throws IllegalArgumentException {
         // Token can be empty
         Book book = bookRepo.findById(id)
@@ -168,7 +161,6 @@ public class BookServiceImpl implements BookService {
 
 
     @Override
-    @CacheEvict(value = "books", key="'book:'+#id")
     public boolean deleteBookById(String token, Long id) throws IllegalArgumentException {
         Book book=bookRepo.findById(id)
                 .orElseThrow(()-> new IllegalArgumentException("Book with id "+id+" not found."));
@@ -177,14 +169,10 @@ public class BookServiceImpl implements BookService {
         }
         bookRepo.deleteById(id);
 
-
-        cacheUtil.clearCache(List.of("books","rolesOfBook","paraIdsOfBook","parasOfBook"),"bookId:"+book.getId());
-
         return true;
     }
 
     @Override
-    @CacheEvict(value = "books", key="'book:'+#id")
     public BookDTO updateBookById(String token, Long id, BookUpdateReq bookUpdReq) throws IllegalArgumentException {
         Book book = bookRepo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Book with id "+id+" not found."));

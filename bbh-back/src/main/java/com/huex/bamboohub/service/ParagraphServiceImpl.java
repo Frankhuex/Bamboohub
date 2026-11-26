@@ -3,13 +3,8 @@ package com.huex.bamboohub.service;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.cache.Cache;
 
 import com.huex.bamboohub.dto.*;
 import com.huex.bamboohub.dao.*;
@@ -26,14 +21,12 @@ public class ParagraphServiceImpl implements ParagraphService {
     @Autowired private BookRepo bookRepo;
     @Autowired private ParagraphConverter paraConverter;
     @Autowired private BookConverter bookConverter;
-    @Autowired private CacheUtil cacheUtil;
     @Autowired private JwtUtil jwtUtil;
     @Autowired private ParaRoleRepo paraRoleRepo;
     @Autowired private RoleRepo roleRepo;
     @Autowired private UserRepo userRepo;
 
     @Override
-    @Cacheable(value="parasOfBook",key="'bookId:'+#bookId")
     public List<ParagraphDTO> getParagraphsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
@@ -44,7 +37,6 @@ public class ParagraphServiceImpl implements ParagraphService {
     }
 
     @Override
-    @Cacheable(value="paraIdsOfBook",key="'bookId:'+#bookId")
     public List<Long> getParaIdsByBookId(String token,Long bookId) throws IllegalArgumentException {
         Book book=bookRepo.findById(bookId)
             .orElseThrow(()->new IllegalArgumentException("Book with id "+bookId+" not found."));
@@ -96,8 +88,6 @@ public class ParagraphServiceImpl implements ParagraphService {
             paraRoleRepo.save(paraRole);
         }
 
-        evictCacheParas(new Long[]{prevParaId,thisId,nextParaId});
-        evictCacheParasOfBook(bookId);
         return savedParas.get(1);
     }
 
@@ -133,17 +123,10 @@ public class ParagraphServiceImpl implements ParagraphService {
 
         // Delete paragraph
         paraRepo.delete(paragraph);
-
-        evictCacheParas(new Long[]{id,prevParaId,nextParaId});
-        evictCacheParasOfBook(bookId);
-        cacheUtil.clearCache("rolesOfPara","paraId:"+id);
-
-        paraRepo.delete(paragraph);
         return true;
     }
 
     @Override
-    @Cacheable(value = "paragraphs", key = "'paraId:' + #id", unless = "#result == null")
     public ParagraphDTO getParagraphById(String token, Long id) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
@@ -155,7 +138,6 @@ public class ParagraphServiceImpl implements ParagraphService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "paragraphs", key = "'paraId:' + #id")
     public ParagraphDTO updateParagraphById(String token, Long id, ParagraphUpdateReq paraUpdReq) throws IllegalArgumentException {
         Paragraph paragraph = paraRepo.findById(id)
             .orElseThrow(()->new IllegalArgumentException("Paragraph with id "+id+" not found."));
@@ -186,10 +168,7 @@ public class ParagraphServiceImpl implements ParagraphService {
             );
 
             paraRoleRepo.save(paraRole);
-            cacheUtil.clearCache("rolesOfPara","paraId:"+id);
         }
-
-        evictCacheParasOfBook(book.getId());
 
         return paraConverter.toDTO(updatedParagraph);
     }
@@ -231,9 +210,6 @@ public class ParagraphServiceImpl implements ParagraphService {
         // Connect four paragraphs
         List<ParagraphDTO> savedParas=connectParas(new Paragraph[]{prevprevPara,paragraph,prevPara,nextPara});
 
-        evictCacheParas(new Long[]{prevprevId,prevId,id,nextId});
-        evictCacheParasOfBook(bookId);
-
         return savedParas.get(1);
     }
 
@@ -273,9 +249,6 @@ public class ParagraphServiceImpl implements ParagraphService {
 
         // Connect four paragraphs
         List<ParagraphDTO> savedParas=connectParas(new Paragraph[]{prevPara,nextPara,paragraph,nextnextPara});
-
-        evictCacheParas(new Long[]{prevId,id,nextId,nextnextId});
-        evictCacheParasOfBook(bookId);
 
         return savedParas.get(2);
     }
@@ -394,20 +367,5 @@ public class ParagraphServiceImpl implements ParagraphService {
                 || para.getNextParaId()==null
                 || para.getBook().getStartPara().getId().equals(para.getId())
                 || para.getBook().getEndPara().getId().equals(para.getId());
-    }
-
-    private void evictCacheParas(Long[] paraIds) {
-        List<String> keys=new ArrayList<>();
-        for (Long id : paraIds) {
-            if (id!=null) {
-                keys.add("paraId:"+id);
-            }
-        }
-        cacheUtil.clearCache("paragraphs",keys);
-        cacheUtil.clearCache("rolesOfPara",keys);
-    }
-
-    private void evictCacheParasOfBook(Long bookId) {
-        cacheUtil.clearCache(List.of("paraIdsOfBook","parasOfBook"),"bookId:"+bookId);
     }
 }

@@ -4,14 +4,9 @@ import com.huex.bamboohub.dao.*;
 import com.huex.bamboohub.dto.ParaRoleDTO;
 import com.huex.bamboohub.dto.ParaRolesDTO;
 import com.huex.bamboohub.request.ParaRoleReq;
-import com.huex.bamboohub.util.CacheUtil;
 import com.huex.bamboohub.util.JwtUtil;
 import com.huex.bamboohub.util.RoleUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,11 +19,9 @@ public class ParaRoleServiceImpl implements ParaRoleService {
     @Autowired private RoleUtil roleUtil;
     @Autowired private ParaRoleConverter paraRoleConverter;
     @Autowired private JwtUtil jwtUtil;
-    @Autowired private CacheUtil cacheUtil;
 
 
     @Override
-    @CacheEvict(value="rolesOfPara", key="'paraId:'+#paraRoleReq.getParaId()")
     public ParaRoleDTO putParaRole(String token, ParaRoleReq paraRoleReq) {
         Paragraph paragraph=paragraphRepo.findById(paraRoleReq.getParaId())
                 .orElseThrow(() -> new IllegalArgumentException("Paragraph not found"));
@@ -62,7 +55,6 @@ public class ParaRoleServiceImpl implements ParaRoleService {
             throw new IllegalArgumentException("User not authorized to put paragraph role");
         }
         paraRoleRepo.deleteById(roleId);
-        cacheUtil.clearCache("rolesOfPara","paraId:"+role.getParagraph().getId());
         return true;
     }
 
@@ -78,12 +70,10 @@ public class ParaRoleServiceImpl implements ParaRoleService {
         role.setRoleType(newType);
         ParaRole savedRole=paraRoleRepo.save(role);
 
-        cacheUtil.clearCache("rolesOfPara","paraId:"+role.getParagraph().getId());
         return paraRoleConverter.toDTO(savedRole);
     }
 
     @Override
-    @Cacheable(value="rolesOfPara", key="'paraId:'+#paraId")
     public ParaRolesDTO getParaRolesByParaId(String token, Long paraId) {
         Paragraph paragraph=paragraphRepo.findById(paraId)
                 .orElseThrow(() -> new IllegalArgumentException("Paragraph not found"));

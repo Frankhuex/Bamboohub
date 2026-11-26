@@ -1,8 +1,5 @@
 package com.huex.bamboohub.service;
 
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.huex.bamboohub.dto.*;
@@ -26,8 +23,6 @@ public class UserServiceImpl implements UserService {
     @Autowired private JwtUtil jwtUtil;
     @Autowired private FollowConverter followConverter;
     @Autowired private FollowRepo followRepo;
-    @Autowired private CacheUtil cacheUtil;
-    @Autowired private UserServiceCache userServiceCache;
 
     @Override
     public UserDTOWithToken register(RegisterReq regReq) throws IllegalArgumentException {
@@ -92,15 +87,12 @@ public class UserServiceImpl implements UserService {
         if (StringUtils.hasText(newNickname) && !oldNickname.equals(newNickname))
             user.setNickname(userUpdateReq.getNickname());
 
-        cacheUtil.clearCache(List.of("users","userFollow","rolesOfBook","rolesOfPara"));
-
         return userConverter.toDTO(userRepo.save(user));
     }
     
 /////////////////////////////////////////////////////
 
     @Override
-    @Cacheable(value="users",key="'user:'+#id")
     public UserDTO getUserById(Long id) {
         return userConverter.toDTO(userRepo.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found.")));
     }
@@ -142,8 +134,6 @@ public class UserServiceImpl implements UserService {
         Follow follow=followRepo.findBySourceAndTarget(user, target).orElse(new Follow(user, target));
         Follow savedFollow=followRepo.save(follow);
 
-        cacheUtil.clearCache("userFollow");
-
         return followConverter.toDTO(savedFollow);
     }
 
@@ -153,8 +143,6 @@ public class UserServiceImpl implements UserService {
         
         User target=userRepo.findById(targetId).orElseThrow(() -> new IllegalArgumentException("User not found."));
         followRepo.findBySourceAndTarget(user, target).ifPresent(follow -> followRepo.delete(follow));
-
-        cacheUtil.clearCache("userFollow");
 
         return true;
     }

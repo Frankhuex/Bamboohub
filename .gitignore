@@ -16,4 +16,11 @@
 ### VS Code ###
 .vscode/
 
+### Build & Generated Assets ###
+bbh-back/target/
+bbh-back/src/main/resources/static/
+bbh-front/dist/
+bbh-front/node_modules/
+
 .DS_Store
+*.tar

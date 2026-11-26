@@ -40,7 +40,7 @@ export default function ParaForm({paraDTO, bookDTO, myRole, action, handleDelete
 
     const fetchParaRoles = async () => {
         try {
-            const response:ResponseData<ParaRolesDTO>=await httpService.empty<ParaRolesDTO>(`paragraph/${paraDTO.id}/paraRoles`,'GET')
+            const response:ResponseData<ParaRolesDTO>=await httpService.empty<ParaRolesDTO>(`/paragraph/${paraDTO.id}/paraRoles`,'GET')
             if (response.success===false) {
                 return
             }

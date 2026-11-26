@@ -1,1 +1,0 @@
-docker-compose -p bbh-test2 up -d --build
