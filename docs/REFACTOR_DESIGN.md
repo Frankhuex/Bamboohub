@@ -217,8 +217,10 @@ cp -r "$ROOT_DIR/bbh-front/dist/"* "$STATIC_DIR/"
 
 echo "==> [3/3] 编译打包后端可执行 JAR..."
 cd "$ROOT_DIR/bbh-back"
-if [ -x /usr/libexec/java_home ]; then
-  export JAVA_HOME="$(/usr/libexec/java_home -v 17)"
+if [ -d "/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home" ]; then
+  export JAVA_HOME="/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home"
+elif [ -x /usr/libexec/java_home ]; then
+  export JAVA_HOME="$(/usr/libexec/java_home -v 21+)"
 fi
 ./mvnw clean package -DskipTests
 
@@ -230,7 +232,7 @@ echo "==> 运行命令: java -jar bbh-back/target/bbh-back-0.2.jar"
 
 ## 7. 新机器完整部署流程（改造后）
 
-改造完成后，外部环境依赖只剩 **JDK 17 + MySQL 8**（不再需要 Docker、Nginx、Redis），拿到新机器部署只需 3 步：
+改造完成后，外部环境依赖只剩 **JDK 21+ + MySQL 8**（不再需要 Docker、Nginx、Redis），拿到新机器部署只需 3 步：
 
 1. **初始化数据库**（仅首次执行）：
    ```bash
