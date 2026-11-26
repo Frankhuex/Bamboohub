@@ -29,7 +29,7 @@ export default function ParaRead({paraDTO, bookDTO, myRole, setParagraphs, parag
 
     const fetchParaRoles = async () => {
         try {
-            const response:ResponseData<ParaRolesDTO>=await httpService.empty<ParaRolesDTO>(`paragraph/${paraDTO.id}/paraRoles`,'GET')
+            const response:ResponseData<ParaRolesDTO>=await httpService.empty<ParaRolesDTO>(`/paragraph/${paraDTO.id}/paraRoles`,'GET')
             if (response.success===false) {
                 return
             }
@@ -65,7 +65,7 @@ export default function ParaRead({paraDTO, bookDTO, myRole, setParagraphs, parag
     const handleMoveUp = async () => {
         setMoveUpLoading(true)
         try {
-            const response:ResponseData<ParagraphDTO>=await httpService.empty<ParagraphDTO>(`paragraph/${paraDTO.id}/moveUp`,'POST')
+            const response:ResponseData<ParagraphDTO>=await httpService.empty<ParagraphDTO>(`/paragraph/${paraDTO.id}/moveUp`,'POST')
             if (response.success===false) {
                 setError(response.errorMsg)
                 setMoveUpLoading(false)
@@ -101,7 +101,7 @@ export default function ParaRead({paraDTO, bookDTO, myRole, setParagraphs, parag
     const handleMoveDown = async () => {
         setMoveDownLoading(true)
         try {
-            const response:ResponseData<ParagraphDTO>=await httpService.empty<ParagraphDTO>(`paragraph/${paraDTO.id}/moveDown`,'POST')
+            const response:ResponseData<ParagraphDTO>=await httpService.empty<ParagraphDTO>(`/paragraph/${paraDTO.id}/moveDown`,'POST')
             if (response.success===false) {
                 setError(response.errorMsg)
                 setMoveDownLoading(false)

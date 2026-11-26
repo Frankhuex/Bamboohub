@@ -8,9 +8,7 @@ export interface ResponseData<T = unknown> {
 const createAxiosInstance = (): AxiosInstance => {
 
 const instance = axios.create({
-    // baseURL: import.meta.env.VITE_API_BASE_URL||'https://bbh.beforce.site/api',
-    // baseURL: '/api',
-    baseURL: 'http://106.13.161.72:10000/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
     timeout: 10000,
 });
 
