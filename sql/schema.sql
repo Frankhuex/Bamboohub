@@ -1,7 +1,8 @@
 -- ============================================================
 -- Bamboohub 数据库初始化脚本
 -- 用法（首次在新机器部署时执行）：
---   mysql -u root -p < sql/schema.sql
+--   Linux (Ubuntu/Debian auth_socket):  sudo mysql < sql/schema.sql
+--   macOS / 密码认证 root:               mysql -u root -p < sql/schema.sql
 -- ============================================================
 
 -- 1. 创建数据库与默认访问账号（如需自定义密码请同步修改 application.properties 或启动参数）
@@ -40,7 +41,9 @@ CREATE TABLE IF NOT EXISTS `book` (
     `scope` enum('ALLEDIT', 'ALLREAD', 'ALLSEARCH', 'PRIVATE') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'ALLSEARCH',
     PRIMARY KEY (`id`),
     KEY `idx_book_start_para_id` (`start_para_id`),
-    KEY `idx_book_end_para_id` (`end_para_id`)
+    KEY `idx_book_end_para_id` (`end_para_id`),
+    CONSTRAINT `book_ibfk_1` FOREIGN KEY (`start_para_id`) REFERENCES `paragraph` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `book_ibfk_2` FOREIGN KEY (`end_para_id`) REFERENCES `paragraph` (`id`) ON DELETE SET NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 -- 4. 段落表
@@ -56,11 +59,6 @@ CREATE TABLE IF NOT EXISTS `paragraph` (
     KEY `idx_paragraph_book_id` (`book_id`),
     CONSTRAINT `paragraph_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `book` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
--- 补齐 book -> paragraph 的双向外键约束
-ALTER TABLE `book`
-    ADD CONSTRAINT `book_ibfk_1` FOREIGN KEY (`start_para_id`) REFERENCES `paragraph` (`id`) ON DELETE SET NULL,
-    ADD CONSTRAINT `book_ibfk_2` FOREIGN KEY (`end_para_id`) REFERENCES `paragraph` (`id`) ON DELETE SET NULL;
 
 -- 5. 书籍成员角色表
 CREATE TABLE IF NOT EXISTS `role` (

@@ -1,1 +1,0 @@
-docker-compose -p bbh02 up -d --build
